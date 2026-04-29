@@ -1,18 +1,37 @@
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fontFamilies, spacing, tapTargetMin } from '@studio-fit/design-tokens';
 import { PaperCard } from '@/components/paper-card';
 import { LiftRow } from '@/components/program';
-import { todayProgram } from '@/lib/mock-data/today-program';
+import { todayProgram, type Program } from '@/lib/mock-data/today-program';
 
 export default function TodayScreen() {
+  const [program, setProgram] = useState<Program>(todayProgram);
+
+  const toggleSet = (liftId: string, setIndex: number, next: boolean) => {
+    setProgram(current => ({
+      ...current,
+      lifts: current.lifts.map(lift =>
+        lift.id === liftId
+          ? {
+              ...lift,
+              sets: lift.sets.map((set, idx) =>
+                idx === setIndex ? { ...set, completed: next } : set
+              ),
+            }
+          : lift
+      ),
+    }));
+  };
+
   return (
     <SafeAreaView style={styles.root} edges={['top', 'left', 'right']}>
-      <TopBar dateLabel={todayProgram.dateShort} />
+      <TopBar dateLabel={program.dateShort} />
       <ScrollView contentContainerStyle={styles.content}>
         <PaperCard ruled margin>
-          {todayProgram.lifts.map(lift => (
-            <LiftRow key={lift.id} lift={lift} />
+          {program.lifts.map(lift => (
+            <LiftRow key={lift.id} lift={lift} onToggleSet={toggleSet} />
           ))}
         </PaperCard>
       </ScrollView>

@@ -6,9 +6,10 @@ import type { Lift, SetEntry } from '@/lib/mock-data/today-program';
 
 type Props = {
   lift: Lift;
+  onToggleSet?: (liftId: string, setIndex: number, next: boolean) => void;
 };
 
-export function LiftRow({ lift }: Props) {
+export function LiftRow({ lift, onToggleSet }: Props) {
   return (
     <View style={styles.lift}>
       <View style={styles.headerRow}>
@@ -19,20 +20,30 @@ export function LiftRow({ lift }: Props) {
       </View>
       <View style={styles.setsRow}>
         {lift.sets.map((set, idx) => (
-          <SetCell key={idx} set={set} />
+          <SetCell
+            key={idx}
+            set={set}
+            onToggle={next => onToggleSet?.(lift.id, idx, next)}
+          />
         ))}
       </View>
     </View>
   );
 }
 
-function SetCell({ set }: { set: SetEntry }) {
+function SetCell({
+  set,
+  onToggle,
+}: {
+  set: SetEntry;
+  onToggle?: (next: boolean) => void;
+}) {
   const showStrike = set.actualReps !== undefined && set.actualReps !== set.prescribedReps;
   const unitSuffix = set.unit === 'sec' ? ' sec' : '';
 
   return (
     <View style={styles.set}>
-      <TallyCheck checked={set.completed} />
+      <TallyCheck checked={set.completed} onToggle={onToggle} />
       {showStrike ? (
         <PencilStrikethrough
           prescribed={`${set.prescribedReps}${unitSuffix}`}
