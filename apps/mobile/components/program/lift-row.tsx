@@ -26,14 +26,19 @@ export function LiftRow({
   const weightActive =
     activeTarget?.kind === 'weight' && activeTarget.liftId === lift.id;
 
+  const homogeneous = isHomogeneous(lift.sets);
+  const headerWeight = homogeneous
+    ? formatCompactHeader(lift.defaultWeight, lift.sets)
+    : lift.defaultWeight;
+
   return (
     <View style={styles.lift}>
       <View style={styles.headerRow}>
         <Text style={styles.name}>{lift.name}</Text>
-        {lift.defaultWeight ? (
+        {headerWeight ? (
           <Pressable onPress={() => onPressWeight?.(lift.id)} hitSlop={8}>
             <Text style={[styles.weight, weightActive && styles.activeText]}>
-              {lift.defaultWeight}
+              {headerWeight}
             </Text>
           </Pressable>
         ) : null}
@@ -44,11 +49,13 @@ export function LiftRow({
             activeTarget?.kind === 'reps' &&
             activeTarget.liftId === lift.id &&
             activeTarget.setIndex === idx;
+          const showReps = !homogeneous || set.actualReps !== undefined;
           return (
             <SetCell
               key={idx}
               set={set}
               active={isActive}
+              showReps={showReps}
               onToggle={next => onToggleSet?.(lift.id, idx, next)}
               onPressReps={() => onPressReps?.(lift.id, idx)}
             />
@@ -59,14 +66,38 @@ export function LiftRow({
   );
 }
 
+function isHomogeneous(sets: SetEntry[]) {
+  if (sets.length === 0) return false;
+  const first = sets[0];
+  return sets.every(
+    s =>
+      s.prescribedReps === first.prescribedReps &&
+      s.unit === first.unit &&
+      s.actualReps === undefined,
+  );
+}
+
+function formatCompactHeader(weight: string | undefined, sets: SetEntry[]) {
+  const reps = sets[0]?.prescribedReps;
+  const count = sets.length;
+  const unitSuffix = sets[0]?.unit === 'sec' ? ' sec' : '';
+  const repsLabel = `${reps}${unitSuffix}`;
+  if (!weight) {
+    return `${repsLabel} × ${count}`;
+  }
+  return `${weight} × ${repsLabel} × ${count}`;
+}
+
 function SetCell({
   set,
   active,
+  showReps,
   onToggle,
   onPressReps,
 }: {
   set: SetEntry;
   active?: boolean;
+  showReps: boolean;
   onToggle?: (next: boolean) => void;
   onPressReps?: () => void;
 }) {
@@ -77,20 +108,22 @@ function SetCell({
   return (
     <View style={styles.set}>
       <TallyCheck checked={set.completed} onToggle={onToggle} />
-      <Pressable onPress={onPressReps} hitSlop={8}>
-        {showStrike ? (
-          <PencilStrikethrough
-            prescribed={`${set.prescribedReps}${unitSuffix}`}
-            actual={`${set.actualReps}${unitSuffix}`}
-            fontSize={20}
-          />
-        ) : (
-          <Text style={[styles.reps, active && styles.activeText]}>
-            {displayValue}
-            {unitSuffix}
-          </Text>
-        )}
-      </Pressable>
+      {showReps ? (
+        <Pressable onPress={onPressReps} hitSlop={8}>
+          {showStrike ? (
+            <PencilStrikethrough
+              prescribed={`${set.prescribedReps}${unitSuffix}`}
+              actual={`${set.actualReps}${unitSuffix}`}
+              fontSize={20}
+            />
+          ) : (
+            <Text style={[styles.reps, active && styles.activeText]}>
+              {displayValue}
+              {unitSuffix}
+            </Text>
+          )}
+        </Pressable>
+      ) : null}
     </View>
   );
 }
