@@ -1,68 +1,35 @@
-import { colors, spacing, typography } from "@studio-fit/design-tokens";
+import { colors } from "@studio-fit/design-tokens";
 
 export default function Home() {
   return (
-    <main
-      style={{
-        background: colors.iron.deep,
-        color: colors.iron.stencil,
-        minHeight: "100vh",
-        padding: spacing[7],
-      }}
-    >
-      <h1
-        style={{
-          fontFamily: "var(--font-display)",
-          fontSize: typography.displayXl.fontSize,
-          fontWeight: 700,
-          margin: 0,
-          color: colors.paper.cream,
-          textShadow: `2px 2px 0 ${colors.rust.base}`,
-          lineHeight: 1,
-        }}
-      >
+    <main className="min-h-screen bg-iron-deep text-iron-stencil p-7">
+      <h1 className="font-display text-7xl font-bold m-0 text-paper-cream leading-none [text-shadow:2px_2px_0_var(--color-rust-base)]">
         Studio Fit Notebook
       </h1>
-      <p
-        style={{
-          fontFamily: "var(--font-block)",
-          textTransform: "uppercase",
-          letterSpacing: "0.1em",
-          fontSize: 14,
-          color: colors.ink.pencilFaded,
-          marginTop: spacing[3],
-        }}
-      >
+      <p className="font-block uppercase tracking-[0.1em] text-sm text-ink-pencil-faded mt-3">
         Admin · Tokens & Fonts Smoke Test
       </p>
 
-      <section style={{ marginTop: spacing[7] }}>
+      <section className="mt-7">
         <SectionTitle>Typography roles</SectionTitle>
 
-        <SampleRow label="display · Caveat" fontFamily="var(--font-display)" size={48} weight={700}>
+        <SampleRow label="display · Caveat" sampleClass="font-display text-5xl font-bold">
           Wednesday — April 27
         </SampleRow>
-        <SampleRow label="block · Oswald" fontFamily="var(--font-block)" size={18} upper letterSpacing="0.1em" weight={600}>
+        <SampleRow label="block · Oswald" sampleClass="font-block uppercase tracking-[0.1em] text-lg font-semibold">
           Publish Program
         </SampleRow>
-        <SampleRow label="pencil · Architects Daughter" fontFamily="var(--font-pencil)" size={22}>
+        <SampleRow label="pencil · Architects Daughter" sampleClass="font-pencil text-2xl">
           Back Squat — 3 sets of 5
         </SampleRow>
-        <SampleRow label="pencil-mono · Special Elite" fontFamily="var(--font-pencil-mono)" size={22}>
+        <SampleRow label="pencil-mono · Special Elite" sampleClass="font-pencil-mono text-2xl">
           5  5  5  4  3
         </SampleRow>
       </section>
 
-      <section style={{ marginTop: spacing[7] }}>
+      <section className="mt-7">
         <SectionTitle>Color palette</SectionTitle>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-            gap: spacing[3],
-            marginTop: spacing[4],
-          }}
-        >
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3 mt-4">
           {Object.entries(colors.paper).map(([name, hex]) => (
             <Swatch key={`paper-${name}`} name={`paper.${name}`} hex={hex} />
           ))}
@@ -80,18 +47,7 @@ export default function Home() {
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h2
-      style={{
-        fontFamily: "var(--font-block)",
-        textTransform: "uppercase",
-        letterSpacing: "0.1em",
-        fontSize: 12,
-        color: colors.ink.pencilFaded,
-        margin: 0,
-        paddingBottom: spacing[2],
-        borderBottom: `1px solid ${colors.iron.light}`,
-      }}
-    >
+    <h2 className="font-block uppercase tracking-[0.1em] text-xs text-ink-pencil-faded m-0 pb-2 border-b border-iron-light">
       {children}
     </h2>
   );
@@ -99,77 +55,30 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 function SampleRow({
   label,
-  fontFamily,
-  size,
-  weight,
-  upper,
-  letterSpacing,
+  sampleClass,
   children,
 }: {
   label: string;
-  fontFamily: string;
-  size: number;
-  weight?: number;
-  upper?: boolean;
-  letterSpacing?: string;
+  sampleClass: string;
   children: React.ReactNode;
 }) {
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "220px 1fr",
-        gap: spacing[5],
-        alignItems: "baseline",
-        padding: `${spacing[3]}px 0`,
-        borderBottom: `1px dashed ${colors.iron.light}`,
-      }}
-    >
-      <span
-        style={{
-          fontFamily: "var(--font-block)",
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
-          fontSize: 11,
-          color: colors.ink.pencilFaded,
-        }}
-      >
+    <div className="grid grid-cols-[220px_1fr] gap-5 items-baseline py-3 border-b border-dashed border-iron-light">
+      <span className="font-block uppercase tracking-[0.05em] text-[11px] text-ink-pencil-faded">
         {label}
       </span>
-      <span
-        style={{
-          fontFamily,
-          fontSize: size,
-          fontWeight: weight,
-          textTransform: upper ? "uppercase" : undefined,
-          letterSpacing,
-          color: colors.paper.cream,
-        }}
-      >
-        {children}
-      </span>
+      <span className={`text-paper-cream ${sampleClass}`}>{children}</span>
     </div>
   );
 }
 
 function Swatch({ name, hex }: { name: string; hex: string }) {
   return (
-    <div
-      style={{
-        background: colors.iron.base,
-        borderRadius: 8,
-        overflow: "hidden",
-        border: `1px solid ${colors.iron.light}`,
-      }}
-    >
-      <div style={{ background: hex, height: 80 }} />
-      <div style={{ padding: spacing[3], fontSize: 13 }}>
-        <div style={{ fontFamily: "monospace", color: colors.paper.cream }}>
-          {name}
-        </div>
-        <div style={{ fontFamily: "monospace", color: colors.ink.pencilFaded }}>
-          {hex}
-        </div>
+    <div className="bg-iron-base rounded-lg overflow-hidden border border-iron-light">
+      <div className="h-20" style={{ background: hex }} />
+      <div className="p-3 text-[13px]">
+        <div className="font-mono text-paper-cream">{name}</div>
+        <div className="font-mono text-ink-pencil-faded">{hex}</div>
       </div>
     </div>
   );

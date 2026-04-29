@@ -1,12 +1,8 @@
 @import "tailwindcss";
-
-@theme inline {
-  --font-display: var(--font-display);
-  --font-block: var(--font-block);
-  --font-pencil: var(--font-pencil);
-  --font-pencil-mono: var(--font-pencil-mono);
-}
+@import "./tokens.css";
 
 body {
   font-family: var(--font-pencil), system-ui, sans-serif;
+  background: var(--color-iron-deep);
+  color: var(--color-iron-stencil);
 }
