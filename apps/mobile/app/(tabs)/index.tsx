@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, fontFamilies, spacing } from '@studio-fit/design-tokens';
+import { PencilStrikethrough } from '@/components/strikethrough';
 import { TallyCheck, TallyRow } from '@/components/tally';
 
 export default function HomeScreen() {
@@ -26,6 +27,22 @@ export default function HomeScreen() {
       <SectionTitle>Tally row · {completed} / {total} sets</SectionTitle>
       <View style={styles.paperCard}>
         <TallyRow total={total} completed={completed} onToggle={toggleAt} />
+      </View>
+
+      <SectionTitle>Pencil strikethrough</SectionTitle>
+      <View style={styles.paperCard}>
+        <View style={styles.strikeRow}>
+          <Text style={styles.liftName}>Bench Press</Text>
+          <PencilStrikethrough prescribed="5" actual="4" fontSize={22} />
+        </View>
+        <View style={styles.strikeRow}>
+          <Text style={styles.liftName}>Back Squat</Text>
+          <PencilStrikethrough prescribed="135" actual="125" fontSize={22} />
+        </View>
+        <View style={styles.strikeRow}>
+          <Text style={styles.liftName}>Deadlift</Text>
+          <PencilStrikethrough prescribed="3 × 5" actual="3 × 4" fontSize={22} />
+        </View>
       </View>
 
       <View style={styles.controlsRow}>
@@ -111,6 +128,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: spacing[5],
     marginTop: spacing[4],
+  },
+  strikeRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    paddingVertical: spacing[2],
+  },
+  liftName: {
+    fontFamily: fontFamilies.pencil,
+    fontSize: 22,
+    color: colors.ink.pencil,
   },
   controlsRow: {
     flexDirection: 'row',
