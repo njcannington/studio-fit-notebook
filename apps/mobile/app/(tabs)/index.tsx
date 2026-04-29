@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, fontFamilies, spacing } from '@studio-fit/design-tokens';
+import { PaperCard } from '@/components/paper-card';
 import { PencilStrikethrough } from '@/components/strikethrough';
 import { TallyCheck, TallyRow } from '@/components/tally';
 
@@ -25,12 +26,12 @@ export default function HomeScreen() {
       </View>
 
       <SectionTitle>Tally row · {completed} / {total} sets</SectionTitle>
-      <View style={styles.paperCard}>
+      <PaperCard style={styles.cardSpacing}>
         <TallyRow total={total} completed={completed} onToggle={toggleAt} />
-      </View>
+      </PaperCard>
 
-      <SectionTitle>Pencil strikethrough</SectionTitle>
-      <View style={styles.paperCard}>
+      <SectionTitle>Pencil strikethrough · ruled & margin</SectionTitle>
+      <PaperCard ruled margin style={styles.cardSpacing}>
         <View style={styles.strikeRow}>
           <Text style={styles.liftName}>Bench Press</Text>
           <PencilStrikethrough prescribed="5" actual="4" fontSize={22} />
@@ -43,7 +44,7 @@ export default function HomeScreen() {
           <Text style={styles.liftName}>Deadlift</Text>
           <PencilStrikethrough prescribed="3 × 5" actual="3 × 4" fontSize={22} />
         </View>
-      </View>
+      </PaperCard>
 
       <View style={styles.controlsRow}>
         <ControlButton label="Reset" onPress={() => setCompleted(0)} />
@@ -123,10 +124,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.ink.pencilLight,
   },
-  paperCard: {
-    backgroundColor: colors.paper.cream,
-    borderRadius: 8,
-    padding: spacing[5],
+  cardSpacing: {
     marginTop: spacing[4],
   },
   strikeRow: {
