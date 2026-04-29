@@ -1,37 +1,44 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { colors, fontFamilies, spacing, typography } from '@studio-fit/design-tokens';
+import { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { colors, fontFamilies, spacing } from '@studio-fit/design-tokens';
+import { TallyCheck, TallyRow } from '@/components/tally';
 
 export default function HomeScreen() {
+  const [singleChecked, setSingleChecked] = useState(false);
+  const [completed, setCompleted] = useState(3);
+  const total = 8;
+
+  const toggleAt = (idx: number, next: boolean) => {
+    setCompleted(next ? idx + 1 : idx);
+  };
+
   return (
     <ScrollView style={styles.root} contentContainerStyle={styles.content}>
       <Text style={styles.wordmark}>Studio Fit Notebook</Text>
-      <Text style={styles.subtitle}>Mobile · Tokens & Fonts Smoke Test</Text>
+      <Text style={styles.subtitle}>Mobile · Tally Components</Text>
 
-      <SectionTitle>Typography roles</SectionTitle>
-      <SampleRow label="display · Caveat" fontFamily={fontFamilies.display} size={40}>
-        Wednesday — April 27
-      </SampleRow>
-      <SampleRow label="block · Oswald" fontFamily={fontFamilies.block} size={18} upper letterSpacing={1.8}>
-        Publish Program
-      </SampleRow>
-      <SampleRow label="pencil · Architects Daughter" fontFamily={fontFamilies.pencil} size={typography.pencilLg.fontSize}>
-        Back Squat — 3 sets of 5
-      </SampleRow>
-      <SampleRow label="pencil-mono · Special Elite" fontFamily={fontFamilies.pencilMono} size={22}>
-        5  5  5  4  3
-      </SampleRow>
+      <SectionTitle>Single tally check</SectionTitle>
+      <View style={styles.row}>
+        <TallyCheck checked={singleChecked} onToggle={setSingleChecked} />
+        <Text style={styles.helper}>{singleChecked ? 'Checked' : 'Tap to check'}</Text>
+      </View>
 
-      <SectionTitle>Color palette</SectionTitle>
-      <View style={styles.grid}>
-        {Object.entries(colors.paper).map(([name, hex]) => (
-          <Swatch key={`paper-${name}`} name={`paper.${name}`} hex={hex} />
-        ))}
-        {Object.entries(colors.ink).map(([name, hex]) => (
-          <Swatch key={`ink-${name}`} name={`ink.${name}`} hex={hex} />
-        ))}
-        {Object.entries(colors.rust).map(([name, hex]) => (
-          <Swatch key={`rust-${name}`} name={`rust.${name}`} hex={hex} />
-        ))}
+      <SectionTitle>Tally row · {completed} / {total} sets</SectionTitle>
+      <View style={styles.paperCard}>
+        <TallyRow total={total} completed={completed} onToggle={toggleAt} />
+      </View>
+
+      <View style={styles.controlsRow}>
+        <ControlButton label="Reset" onPress={() => setCompleted(0)} />
+        <ControlButton label="Fill" onPress={() => setCompleted(total)} />
+        <ControlButton
+          label="− 1"
+          onPress={() => setCompleted(c => Math.max(0, c - 1))}
+        />
+        <ControlButton
+          label="+ 1"
+          onPress={() => setCompleted(c => Math.min(total, c + 1))}
+        />
       </View>
     </ScrollView>
   );
@@ -41,48 +48,11 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   return <Text style={styles.sectionTitle}>{children}</Text>;
 }
 
-function SampleRow({
-  label,
-  fontFamily,
-  size,
-  upper,
-  letterSpacing,
-  children,
-}: {
-  label: string;
-  fontFamily: string;
-  size: number;
-  upper?: boolean;
-  letterSpacing?: number;
-  children: React.ReactNode;
-}) {
+function ControlButton({ label, onPress }: { label: string; onPress: () => void }) {
   return (
-    <View style={styles.sampleRow}>
-      <Text style={styles.sampleLabel}>{label}</Text>
-      <Text
-        style={{
-          fontFamily,
-          fontSize: size,
-          color: colors.paper.cream,
-          textTransform: upper ? 'uppercase' : undefined,
-          letterSpacing,
-        }}
-      >
-        {children}
-      </Text>
-    </View>
-  );
-}
-
-function Swatch({ name, hex }: { name: string; hex: string }) {
-  return (
-    <View style={styles.swatch}>
-      <View style={[styles.swatchColor, { backgroundColor: hex }]} />
-      <View style={styles.swatchInfo}>
-        <Text style={styles.swatchName}>{name}</Text>
-        <Text style={styles.swatchHex}>{hex}</Text>
-      </View>
-    </View>
+    <Pressable onPress={onPress} style={styles.button}>
+      <Text style={styles.buttonText}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -103,7 +73,8 @@ const styles = StyleSheet.create({
     textShadowColor: colors.rust.base,
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 0,
-    lineHeight: 60,
+    paddingTop: 8,
+    paddingBottom: 24,
   },
   subtitle: {
     fontFamily: fontFamilies.block,
@@ -124,46 +95,42 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.iron.light,
   },
-  sampleRow: {
-    paddingVertical: spacing[3],
-    borderBottomWidth: 1,
-    borderBottomColor: colors.iron.light,
-    borderStyle: 'dashed',
-    gap: spacing[2],
-  },
-  sampleLabel: {
-    fontFamily: fontFamilies.block,
-    fontSize: 11,
-    letterSpacing: 0.55,
-    textTransform: 'uppercase',
-    color: colors.ink.pencilFaded,
-  },
-  grid: {
-    marginTop: spacing[4],
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing[3],
+    marginTop: spacing[4],
   },
-  swatch: {
-    backgroundColor: colors.iron.base,
+  helper: {
+    fontFamily: fontFamilies.pencil,
+    fontSize: 16,
+    color: colors.ink.pencilLight,
+  },
+  paperCard: {
+    backgroundColor: colors.paper.cream,
     borderRadius: 8,
-    overflow: 'hidden',
+    padding: spacing[5],
+    marginTop: spacing[4],
+  },
+  controlsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing[3],
+    marginTop: spacing[5],
+  },
+  button: {
+    backgroundColor: colors.iron.base,
     borderWidth: 1,
     borderColor: colors.iron.light,
+    paddingVertical: spacing[2],
+    paddingHorizontal: spacing[4],
+    borderRadius: 6,
   },
-  swatchColor: {
-    height: 64,
-  },
-  swatchInfo: {
-    padding: spacing[3],
-  },
-  swatchName: {
-    fontFamily: fontFamilies.pencilMono,
+  buttonText: {
+    fontFamily: fontFamilies.block,
+    fontSize: 14,
     color: colors.paper.cream,
-    fontSize: 13,
-  },
-  swatchHex: {
-    fontFamily: fontFamilies.pencilMono,
-    color: colors.ink.pencilFaded,
-    fontSize: 12,
-    marginTop: 2,
+    textTransform: 'uppercase',
+    letterSpacing: 0.7,
   },
 });
