@@ -1,112 +1,111 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { colors, fontFamilies, spacing } from '@studio-fit/design-tokens';
+import { NumberPad } from '@/components/number-pad';
 
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
+type EditTarget = {
+  label: string;
+  initialValue: string;
+  allowDecimal: boolean;
+  unitLabel?: string;
+};
 
-export default function TabTwoScreen() {
+const TARGETS: EditTarget[] = [
+  { label: 'Reps', initialValue: '7', allowDecimal: false },
+  { label: 'Weight (lb)', initialValue: '35', allowDecimal: true, unitLabel: 'lb' },
+  { label: 'Duration', initialValue: '20', allowDecimal: false, unitLabel: 'sec' },
+];
+
+export default function NumberPadDemoScreen() {
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [values, setValues] = useState(TARGETS.map(t => t.initialValue));
+
+  const active = activeIndex !== null ? TARGETS[activeIndex] : null;
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Explore
-        </ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          style={{ width: 100, height: 100, alignSelf: 'center' }}
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+    <SafeAreaView style={styles.root} edges={['top', 'left', 'right']}>
+      <View style={styles.content}>
+        <Text style={styles.title}>Number pad demo</Text>
+        <Text style={styles.subtitle}>Tap a value to open the keypad.</Text>
+
+        {TARGETS.map((target, idx) => (
+          <Pressable
+            key={target.label}
+            style={styles.row}
+            onPress={() => setActiveIndex(idx)}
+          >
+            <Text style={styles.rowLabel}>{target.label}</Text>
+            <Text style={styles.rowValue}>
+              {values[idx]}
+              {target.unitLabel ? ` ${target.unitLabel}` : ''}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
+      <NumberPad
+        visible={activeIndex !== null}
+        initialValue={active?.initialValue ?? '0'}
+        allowDecimal={active?.allowDecimal}
+        unitLabel={active?.unitLabel}
+        onCancel={() => setActiveIndex(null)}
+        onCommit={value => {
+          if (activeIndex !== null) {
+            setValues(current => current.map((v, i) => (i === activeIndex ? value : v)));
+          }
+          setActiveIndex(null);
+        }}
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  root: {
+    flex: 1,
+    backgroundColor: colors.iron.deep,
   },
-  titleContainer: {
+  content: {
+    padding: spacing[5],
+  },
+  title: {
+    fontFamily: fontFamilies.display,
+    fontSize: 36,
+    color: colors.paper.cream,
+    textShadowColor: colors.rust.base,
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 0,
+  },
+  subtitle: {
+    fontFamily: fontFamilies.block,
+    fontSize: 12,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: colors.ink.pencilFaded,
+    marginTop: spacing[2],
+    marginBottom: spacing[6],
+  },
+  row: {
     flexDirection: 'row',
-    gap: 8,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing[4],
+    paddingHorizontal: spacing[4],
+    backgroundColor: colors.iron.base,
+    borderRadius: 8,
+    marginBottom: spacing[3],
+  },
+  rowLabel: {
+    fontFamily: fontFamilies.block,
+    fontSize: 14,
+    letterSpacing: 0.7,
+    textTransform: 'uppercase',
+    color: colors.ink.pencilFaded,
+  },
+  rowValue: {
+    fontFamily: fontFamilies.pencil,
+    fontSize: 22,
+    color: colors.paper.cream,
   },
 });
