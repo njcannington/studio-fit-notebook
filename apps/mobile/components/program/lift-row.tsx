@@ -13,6 +13,7 @@ type Props = {
   onToggleSet?: (liftId: string, setIndex: number, next: boolean) => void;
   onPressReps?: (liftId: string, setIndex: number) => void;
   onPressWeight?: (liftId: string) => void;
+  onLongPress?: (liftId: string) => void;
   activeTarget?: EditTarget | null;
 };
 
@@ -21,6 +22,7 @@ export function LiftRow({
   onToggleSet,
   onPressReps,
   onPressWeight,
+  onLongPress,
   activeTarget,
 }: Props) {
   const weightActive =
@@ -29,7 +31,11 @@ export function LiftRow({
   const headerLabel = formatCompactHeader(lift.defaultWeight, lift.sets);
 
   return (
-    <View style={styles.lift}>
+    <Pressable
+      onLongPress={onLongPress ? () => onLongPress(lift.id) : undefined}
+      delayLongPress={400}
+      style={styles.lift}
+    >
       <View style={styles.headerRow}>
         <Text style={styles.name}>{lift.name}</Text>
         {headerLabel ? (
@@ -57,7 +63,7 @@ export function LiftRow({
           );
         })}
       </View>
-    </View>
+    </Pressable>
   );
 }
 

@@ -141,3 +141,44 @@ export function setProgramStatus(status: 'draft' | 'published' | 'completed') {
   const db = getDb();
   db.runSync('UPDATE programs SET status = ? WHERE id = ?', [status, TODAY_PROGRAM_ID]);
 }
+
+export function addSetToLift(liftId: string) {
+  const db = getDb();
+  const last = db.getFirstSync<SetRow>(
+    'SELECT * FROM sets WHERE lift_id = ? ORDER BY sort_order DESC LIMIT 1',
+    [liftId],
+  );
+  const sortOrder = last ? last.sort_order + 1 : 0;
+  const id = `${liftId}-${sortOrder}-${Date.now()}`;
+  db.runSync(
+    `INSERT INTO sets (id, lift_id, sort_order, prescribed_reps, actual_reps,
+      prescribed_weight, actual_weight, unit, completed)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      liftId,
+      sortOrder,
+      last?.prescribed_reps ?? 5,
+      null,
+      last?.prescribed_weight ?? null,
+      null,
+      last?.unit ?? null,
+      0,
+    ],
+  );
+}
+
+export function removeLastSetFromLift(liftId: string) {
+  const db = getDb();
+  const last = db.getFirstSync<{ id: string }>(
+    'SELECT id FROM sets WHERE lift_id = ? ORDER BY sort_order DESC LIMIT 1',
+    [liftId],
+  );
+  if (!last) return;
+  db.runSync('DELETE FROM sets WHERE id = ?', [last.id]);
+}
+
+export function removeLift(liftId: string) {
+  const db = getDb();
+  db.runSync('DELETE FROM lifts WHERE id = ?', [liftId]);
+}

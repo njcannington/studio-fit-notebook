@@ -2,18 +2,49 @@ import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fontFamilies, spacing, tapTargetMin } from '@studio-fit/design-tokens';
+import { ActionSheet, type ActionItem } from '@/components/action-sheet';
 import { WavyDivider } from '@/components/divider';
 import { ChevronLeftIcon, PencilIcon } from '@/components/icons';
 import { NumberPad } from '@/components/number-pad';
 import { PaperCard } from '@/components/paper-card';
 import { LiftRow, type EditTarget } from '@/components/program';
+import { useRole } from '@/lib/db/use-role';
 import { useTodayProgram } from '@/lib/db/use-today-program';
 import type { Program } from '@/lib/mock-data/today-program';
 
+const LIFT_ACTIONS: ActionItem[] = [
+  { id: 'add-set', label: 'Add set' },
+  { id: 'remove-set', label: 'Remove set' },
+  { id: 'remove-lift', label: 'Remove lift', destructive: true },
+];
+
 export default function TodayScreen() {
-  const { program, toggleSet, updateActualReps, updateLiftWeight, updateStatus } =
-    useTodayProgram();
+  const {
+    program,
+    toggleSet,
+    updateActualReps,
+    updateLiftWeight,
+    updateStatus,
+    addSet,
+    removeSet,
+    deleteLift,
+  } = useTodayProgram();
+  const { role } = useRole();
+  const isAdmin = role === 'admin';
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
+  const [actionLiftId, setActionLiftId] = useState<string | null>(null);
+
+  const handleAction = (id: string) => {
+    if (!actionLiftId) return;
+    if (id === 'add-set') addSet(actionLiftId);
+    else if (id === 'remove-set') removeSet(actionLiftId);
+    else if (id === 'remove-lift') deleteLift(actionLiftId);
+    setActionLiftId(null);
+  };
+
+  const actionLiftName = actionLiftId
+    ? program?.lifts.find(l => l.id === actionLiftId)?.name
+    : undefined;
 
   const editContext = useMemo(() => {
     if (!editTarget || !program) return null;
@@ -59,7 +90,7 @@ export default function TodayScreen() {
   return (
     <SafeAreaView style={styles.root} edges={['top', 'left', 'right']}>
       <TopBar dateLabel={program.dateShort} />
-      {program.status === 'draft' ? (
+      {program.status === 'draft' && !isAdmin ? (
         <EmptyState />
       ) : (
         <ProgramView
@@ -71,8 +102,17 @@ export default function TodayScreen() {
           }
           onPressWeight={liftId => setEditTarget({ kind: 'weight', liftId })}
           onComplete={() => updateStatus('completed')}
+          onLongPressLift={isAdmin ? liftId => setActionLiftId(liftId) : undefined}
         />
       )}
+
+      <ActionSheet
+        visible={actionLiftId !== null}
+        title={actionLiftName ? `Lift · ${actionLiftName}` : undefined}
+        actions={LIFT_ACTIONS}
+        onSelect={handleAction}
+        onCancel={() => setActionLiftId(null)}
+      />
 
       <NumberPad
         visible={editTarget !== null}
@@ -93,6 +133,7 @@ type ProgramViewProps = {
   onPressReps: (liftId: string, setIndex: number) => void;
   onPressWeight: (liftId: string) => void;
   onComplete: () => void;
+  onLongPressLift?: (liftId: string) => void;
 };
 
 function ProgramView({
@@ -102,6 +143,7 @@ function ProgramView({
   onPressReps,
   onPressWeight,
   onComplete,
+  onLongPressLift,
 }: ProgramViewProps) {
   const allComplete = program.lifts.every(lift => lift.sets.every(s => s.completed));
   const isCompleted = program.status === 'completed';
@@ -118,6 +160,7 @@ function ProgramView({
             onToggleSet={onToggleSet}
             onPressReps={onPressReps}
             onPressWeight={onPressWeight}
+            onLongPress={onLongPressLift}
           />
         ))}
         {allComplete && !isCompleted ? (

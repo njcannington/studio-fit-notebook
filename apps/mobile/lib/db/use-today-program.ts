@@ -1,7 +1,10 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
+  addSetToLift,
   loadTodayProgram,
+  removeLastSetFromLift,
+  removeLift,
   seedTodayProgramIfEmpty,
   setLiftDefaultWeight,
   setProgramStatus,
@@ -81,5 +84,34 @@ export function useTodayProgram() {
     setProgram(current => (current ? { ...current, status } : current));
   };
 
-  return { program, toggleSet, updateActualReps, updateLiftWeight, updateStatus };
+  const reload = () => {
+    const fresh = loadTodayProgram();
+    if (fresh) setProgram(fresh);
+  };
+
+  const addSet = (liftId: string) => {
+    addSetToLift(liftId);
+    reload();
+  };
+
+  const removeSet = (liftId: string) => {
+    removeLastSetFromLift(liftId);
+    reload();
+  };
+
+  const deleteLift = (liftId: string) => {
+    removeLift(liftId);
+    reload();
+  };
+
+  return {
+    program,
+    toggleSet,
+    updateActualReps,
+    updateLiftWeight,
+    updateStatus,
+    addSet,
+    removeSet,
+    deleteLift,
+  };
 }
