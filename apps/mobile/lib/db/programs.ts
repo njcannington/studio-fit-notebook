@@ -1,8 +1,6 @@
 import { getDb } from './index';
-import { todayProgram } from '@/lib/mock-data/today-program';
+import { seedPrograms } from '@/lib/mock-data/today-program';
 import type { Lift, Program, SetEntry } from '@/lib/mock-data/today-program';
-
-const TODAY_PROGRAM_ID = 'today';
 
 type ProgramRow = {
   id: string;
@@ -31,87 +29,116 @@ type SetRow = {
   completed: number;
 };
 
-export function loadTodayProgram(): Program | null {
-  const db = getDb();
-  const program = db.getFirstSync<ProgramRow>(
-    'SELECT * FROM programs WHERE id = ?',
-    [TODAY_PROGRAM_ID],
-  );
-  if (!program) return null;
-
-  const liftRows = db.getAllSync<LiftRow>(
-    'SELECT * FROM lifts WHERE program_id = ? ORDER BY sort_order',
-    [program.id],
-  );
-
-  const lifts: Lift[] = liftRows.map(row => {
-    const setRows = db.getAllSync<SetRow>(
-      'SELECT * FROM sets WHERE lift_id = ? ORDER BY sort_order',
-      [row.id],
-    );
-    const sets: SetEntry[] = setRows.map(s => ({
-      prescribedReps: s.prescribed_reps,
-      actualReps: s.actual_reps ?? undefined,
-      prescribedWeight: s.prescribed_weight ?? undefined,
-      actualWeight: s.actual_weight ?? undefined,
-      unit: (s.unit as SetEntry['unit']) ?? undefined,
-      completed: s.completed === 1,
-    }));
-    return {
-      id: row.id,
-      name: row.name,
-      defaultWeight: row.default_weight ?? undefined,
-      sets,
-    };
-  });
-
+function rowToSet(s: SetRow): SetEntry {
   return {
-    date: program.date,
-    dateShort: program.date_short,
-    status: program.status,
-    lifts,
+    prescribedReps: s.prescribed_reps,
+    actualReps: s.actual_reps ?? undefined,
+    prescribedWeight: s.prescribed_weight ?? undefined,
+    actualWeight: s.actual_weight ?? undefined,
+    unit: (s.unit as SetEntry['unit']) ?? undefined,
+    completed: s.completed === 1,
   };
 }
 
-export function seedTodayProgramIfEmpty(): Program {
-  const existing = loadTodayProgram();
-  if (existing) return existing;
+function rowToLift(db: ReturnType<typeof getDb>, row: LiftRow): Lift {
+  const setRows = db.getAllSync<SetRow>(
+    'SELECT * FROM sets WHERE lift_id = ? ORDER BY sort_order',
+    [row.id],
+  );
+  return {
+    id: row.id,
+    name: row.name,
+    defaultWeight: row.default_weight ?? undefined,
+    sets: setRows.map(rowToSet),
+  };
+}
 
+export function loadProgram(programId: string): Program | null {
   const db = getDb();
-  db.withTransactionSync(() => {
-    db.runSync(
-      'INSERT INTO programs (id, date, date_short, status) VALUES (?, ?, ?, ?)',
-      [TODAY_PROGRAM_ID, todayProgram.date, todayProgram.dateShort, todayProgram.status],
+  const row = db.getFirstSync<ProgramRow>(
+    'SELECT * FROM programs WHERE id = ?',
+    [programId],
+  );
+  if (!row) return null;
+
+  const liftRows = db.getAllSync<LiftRow>(
+    'SELECT * FROM lifts WHERE program_id = ? ORDER BY sort_order',
+    [row.id],
+  );
+
+  return {
+    id: row.id,
+    date: row.date,
+    dateShort: row.date_short,
+    status: row.status,
+    lifts: liftRows.map(lift => rowToLift(db, lift)),
+  };
+}
+
+export function loadAllPrograms(): Program[] {
+  const db = getDb();
+  const rows = db.getAllSync<ProgramRow>(
+    'SELECT * FROM programs ORDER BY id DESC',
+  );
+  return rows.map(row => {
+    const liftRows = db.getAllSync<LiftRow>(
+      'SELECT * FROM lifts WHERE program_id = ? ORDER BY sort_order',
+      [row.id],
     );
-    todayProgram.lifts.forEach((lift, liftIdx) => {
+    return {
+      id: row.id,
+      date: row.date,
+      dateShort: row.date_short,
+      status: row.status,
+      lifts: liftRows.map(lift => rowToLift(db, lift)),
+    };
+  });
+}
+
+export function seedProgramsIfEmpty(): Program[] {
+  const db = getDb();
+  const existing = db.getFirstSync<{ count: number }>(
+    'SELECT COUNT(*) as count FROM programs',
+  );
+  if ((existing?.count ?? 0) > 0) {
+    return loadAllPrograms();
+  }
+
+  const programs = seedPrograms();
+  db.withTransactionSync(() => {
+    programs.forEach(program => {
       db.runSync(
-        'INSERT INTO lifts (id, program_id, name, default_weight, sort_order) VALUES (?, ?, ?, ?, ?)',
-        [lift.id, TODAY_PROGRAM_ID, lift.name, lift.defaultWeight ?? null, liftIdx],
+        'INSERT INTO programs (id, date, date_short, status) VALUES (?, ?, ?, ?)',
+        [program.id, program.date, program.dateShort, program.status],
       );
-      lift.sets.forEach((set, setIdx) => {
+      program.lifts.forEach((lift, liftIdx) => {
         db.runSync(
-          `INSERT INTO sets (id, lift_id, sort_order, prescribed_reps, actual_reps,
-            prescribed_weight, actual_weight, unit, completed)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            `${lift.id}-${setIdx}`,
-            lift.id,
-            setIdx,
-            set.prescribedReps,
-            set.actualReps ?? null,
-            set.prescribedWeight ?? null,
-            set.actualWeight ?? null,
-            set.unit ?? null,
-            set.completed ? 1 : 0,
-          ],
+          'INSERT INTO lifts (id, program_id, name, default_weight, sort_order) VALUES (?, ?, ?, ?, ?)',
+          [lift.id, program.id, lift.name, lift.defaultWeight ?? null, liftIdx],
         );
+        lift.sets.forEach((set, setIdx) => {
+          db.runSync(
+            `INSERT INTO sets (id, lift_id, sort_order, prescribed_reps, actual_reps,
+              prescribed_weight, actual_weight, unit, completed)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              `${lift.id}-${setIdx}`,
+              lift.id,
+              setIdx,
+              set.prescribedReps,
+              set.actualReps ?? null,
+              set.prescribedWeight ?? null,
+              set.actualWeight ?? null,
+              set.unit ?? null,
+              set.completed ? 1 : 0,
+            ],
+          );
+        });
       });
     });
   });
 
-  const seeded = loadTodayProgram();
-  if (!seeded) throw new Error('Failed to seed today program');
-  return seeded;
+  return loadAllPrograms();
 }
 
 export function setSetCompleted(liftId: string, setIndex: number, completed: boolean) {
@@ -137,9 +164,9 @@ export function setLiftDefaultWeight(liftId: string, weight: string) {
   db.runSync('UPDATE lifts SET default_weight = ? WHERE id = ?', [weight, liftId]);
 }
 
-export function setProgramStatus(status: 'draft' | 'published' | 'completed') {
+export function setProgramStatus(programId: string, status: 'draft' | 'published' | 'completed') {
   const db = getDb();
-  db.runSync('UPDATE programs SET status = ? WHERE id = ?', [status, TODAY_PROGRAM_ID]);
+  db.runSync('UPDATE programs SET status = ? WHERE id = ?', [status, programId]);
 }
 
 export function addSetToLift(liftId: string) {

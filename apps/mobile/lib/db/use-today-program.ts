@@ -2,26 +2,33 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   addSetToLift,
-  loadTodayProgram,
+  loadProgram,
   removeLastSetFromLift,
   removeLift,
-  seedTodayProgramIfEmpty,
+  seedProgramsIfEmpty,
   setLiftDefaultWeight,
   setProgramStatus,
   setSetActualReps,
   setSetCompleted,
 } from './programs';
-import type { Program } from '@/lib/mock-data/today-program';
+import { todayProgramId, type Program } from '@/lib/mock-data/today-program';
 
-export function useTodayProgram() {
+export function useTodayProgram(programIdOverride?: string) {
+  const programId = programIdOverride ?? todayProgramId();
   const [program, setProgram] = useState<Program | null>(null);
 
   useFocusEffect(
     useCallback(() => {
-      const fresh = seedTodayProgramIfEmpty();
-      setProgram(fresh);
-    }, []),
+      seedProgramsIfEmpty();
+      const loaded = loadProgram(programId);
+      setProgram(loaded);
+    }, [programId]),
   );
+
+  const reload = () => {
+    const fresh = loadProgram(programId);
+    if (fresh) setProgram(fresh);
+  };
 
   const toggleSet = (liftId: string, setIndex: number, next: boolean) => {
     setSetCompleted(liftId, setIndex, next);
@@ -80,13 +87,9 @@ export function useTodayProgram() {
   };
 
   const updateStatus = (status: 'draft' | 'published' | 'completed') => {
-    setProgramStatus(status);
+    if (!program) return;
+    setProgramStatus(program.id, status);
     setProgram(current => (current ? { ...current, status } : current));
-  };
-
-  const reload = () => {
-    const fresh = loadTodayProgram();
-    if (fresh) setProgram(fresh);
   };
 
   const addSet = (liftId: string) => {
