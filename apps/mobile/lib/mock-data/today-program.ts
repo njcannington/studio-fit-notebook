@@ -174,12 +174,43 @@ function withClonedId(lift: Lift): Lift {
 
 export function seedClients(): Client[] {
   return [
+    // Today's roster — these have programs (or "no program" rows)
     { id: 'nic', name: 'Nic', time: '6:00 am' },
     { id: 'sarah', name: 'Sarah', time: '6:00 am' },
     { id: 'marcus', name: 'Marcus', time: '6:45 am' },
     { id: 'jen', name: 'Jen', time: '6:45 am' },
     { id: 'david', name: 'David', time: '7:30 am' },
     { id: 'pat', name: 'Pat', time: '9:00 am' },
+
+    // The rest of the client pool — not on today's roster
+    { id: 'aaron', name: 'Aaron' },
+    { id: 'amy', name: 'Amy' },
+    { id: 'ben', name: 'Ben' },
+    { id: 'beth', name: 'Beth' },
+    { id: 'carla', name: 'Carla' },
+    { id: 'chris', name: 'Chris' },
+    { id: 'dana', name: 'Dana' },
+    { id: 'derek', name: 'Derek' },
+    { id: 'eric', name: 'Eric' },
+    { id: 'evelyn', name: 'Evelyn' },
+    { id: 'frank', name: 'Frank' },
+    { id: 'grace', name: 'Grace' },
+    { id: 'hannah', name: 'Hannah' },
+    { id: 'ian', name: 'Ian' },
+    { id: 'isabel', name: 'Isabel' },
+    { id: 'kara', name: 'Kara' },
+    { id: 'leo', name: 'Leo' },
+    { id: 'liam', name: 'Liam' },
+    { id: 'mia', name: 'Mia' },
+    { id: 'nora', name: 'Nora' },
+    { id: 'paul', name: 'Paul' },
+    { id: 'rachel', name: 'Rachel' },
+    { id: 'sam', name: 'Sam' },
+    { id: 'tess', name: 'Tess' },
+    { id: 'theo', name: 'Theo' },
+    { id: 'wendy', name: 'Wendy' },
+    { id: 'will', name: 'Will' },
+    { id: 'zoe', name: 'Zoe' },
   ];
 }
 

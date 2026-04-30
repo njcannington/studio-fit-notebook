@@ -18,11 +18,15 @@ export function useTodayRoster() {
       const clients = loadClients();
       const programs = loadProgramsForDate(todayIso());
       const programByClient = new Map(programs.map(p => [p.clientId, p]));
+      // Today's roster = clients with a session time set, plus anyone who has
+      // a program for today regardless of time (e.g. walk-ins added by trainer).
       setRows(
-        clients.map(client => ({
-          client,
-          program: programByClient.get(client.id) ?? null,
-        })),
+        clients
+          .filter(c => c.time || programByClient.has(c.id))
+          .map(client => ({
+            client,
+            program: programByClient.get(client.id) ?? null,
+          })),
       );
     }, []),
   );
