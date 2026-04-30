@@ -10,8 +10,10 @@ import { ChevronLeftIcon, PencilIcon } from '@/components/icons';
 import { NumberPad } from '@/components/number-pad';
 import { PaperCard } from '@/components/paper-card';
 import { LiftRow, type EditTarget } from '@/components/program';
+import { RosterView } from '@/components/roster';
 import { useClientPrograms } from '@/lib/db/use-all-programs';
 import { useRole } from '@/lib/db/use-role';
+import { useTodayRoster } from '@/lib/db/use-roster';
 import { useTodayProgram } from '@/lib/db/use-today-program';
 import { programIdFor, todayIso, type Program } from '@/lib/mock-data/today-program';
 
@@ -26,13 +28,18 @@ const LIFT_ACTIONS: ActionItem[] = [
 
 export default function TodayScreen() {
   const params = useLocalSearchParams<{ date?: string }>();
-  const [viewedProgramId, setViewedProgramId] = useState<string>(() => todayProgramId());
+  const { role } = useRole();
+  const isAdmin = role === 'admin';
+
+  const defaultProgramId = isAdmin ? null : todayProgramId();
+  const [viewedProgramId, setViewedProgramId] = useState<string | null>(defaultProgramId);
 
   useEffect(() => {
     if (params.date && params.date !== viewedProgramId) {
       setViewedProgramId(params.date);
     }
   }, [params.date, viewedProgramId]);
+
   const {
     program,
     toggleSet,
@@ -45,10 +52,9 @@ export default function TodayScreen() {
     updateLiftPrescribedReps,
     updateSetPrescribedReps,
     updateLiftSetCount,
-  } = useTodayProgram(viewedProgramId);
+  } = useTodayProgram(viewedProgramId ?? undefined);
   const allPrograms = useClientPrograms(DEFAULT_CLIENT_ID);
-  const { role } = useRole();
-  const isAdmin = role === 'admin';
+  const rosterRows = useTodayRoster();
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
   const [actionLiftId, setActionLiftId] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -130,18 +136,37 @@ export default function TodayScreen() {
     setEditTarget(null);
   };
 
-  const dateLabelForBar = program?.dateShort ?? viewedProgramId;
+  const showRoster = isAdmin && viewedProgramId === null;
+  const clientName = program
+    ? rosterRows.find(r => r.client.id === program.clientId)?.client.name
+    : undefined;
+  const dateLabelForBar = showRoster
+    ? 'Today'
+    : isAdmin && clientName && program
+      ? `${clientName} — ${program.dateShort}`
+      : program?.dateShort ?? viewedProgramId ?? 'Today';
+
+  const handleRosterRowPress = (row: typeof rosterRows[number]) => {
+    if (row.program) {
+      setViewedProgramId(row.program.id);
+    }
+    // No-program rows are not navigable yet — TODO: new-program-from-scratch flow.
+  };
 
   return (
     <SafeAreaView style={styles.root} edges={['top', 'left', 'right']}>
       <TopBar
         dateLabel={dateLabelForBar}
         isAdmin={isAdmin}
-        showTodayJump={viewedProgramId !== todayProgramId()}
-        onPressDate={() => setPickerOpen(true)}
+        showChevron={isAdmin && !showRoster}
+        showTodayJump={!isAdmin && viewedProgramId !== todayProgramId()}
+        onPressChevron={() => setViewedProgramId(null)}
+        onPressDate={showRoster ? undefined : () => setPickerOpen(true)}
         onPressToday={() => setViewedProgramId(todayProgramId())}
       />
-      {!program ? (
+      {showRoster ? (
+        <RosterView rows={rosterRows} onPressClient={handleRosterRowPress} />
+      ) : !program ? (
         <NoProgramForDate />
       ) : program.status === 'draft' && !isAdmin ? (
         <EmptyState />
@@ -319,22 +344,35 @@ function NoProgramForDate() {
 function TopBar({
   dateLabel,
   isAdmin,
+  showChevron,
   showTodayJump,
+  onPressChevron,
   onPressDate,
   onPressToday,
 }: {
   dateLabel: string;
   isAdmin: boolean;
+  showChevron?: boolean;
   showTodayJump?: boolean;
+  onPressChevron?: () => void;
   onPressDate?: () => void;
   onPressToday?: () => void;
 }) {
   return (
     <View style={styles.topBar}>
-      <Pressable style={styles.iconButton} hitSlop={8}>
-        <ChevronLeftIcon size={28} color={colors.iron.stencil} />
-      </Pressable>
-      <Pressable onPress={onPressDate} hitSlop={8} style={styles.dateLabelWrapper}>
+      {showChevron ? (
+        <Pressable onPress={onPressChevron} style={styles.iconButton} hitSlop={8}>
+          <ChevronLeftIcon size={28} color={colors.iron.stencil} />
+        </Pressable>
+      ) : (
+        <View style={styles.iconButton} />
+      )}
+      <Pressable
+        onPress={onPressDate}
+        hitSlop={8}
+        style={styles.dateLabelWrapper}
+        disabled={!onPressDate}
+      >
         <Text style={styles.dateLabel} numberOfLines={1}>
           {dateLabel}
         </Text>
