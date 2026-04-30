@@ -7,9 +7,12 @@ import {
   removeLift,
   seedProgramsIfEmpty,
   setLiftDefaultWeight,
+  setLiftPrescribedReps,
+  setLiftSetCount,
   setProgramStatus,
   setSetActualReps,
   setSetCompleted,
+  setSetPrescribedReps,
 } from './programs';
 import { todayProgramId, type Program } from '@/lib/mock-data/today-program';
 
@@ -107,6 +110,21 @@ export function useTodayProgram(programIdOverride?: string) {
     reload();
   };
 
+  const updateLiftPrescribedReps = (liftId: string, reps: number) => {
+    setLiftPrescribedReps(liftId, reps);
+    reload();
+  };
+
+  const updateSetPrescribedReps = (liftId: string, setIndex: number, reps: number) => {
+    setSetPrescribedReps(liftId, setIndex, reps);
+    reload();
+  };
+
+  const updateLiftSetCount = (liftId: string, count: number) => {
+    setLiftSetCount(liftId, count);
+    reload();
+  };
+
   return {
     program,
     toggleSet,
@@ -116,5 +134,8 @@ export function useTodayProgram(programIdOverride?: string) {
     addSet,
     removeSet,
     deleteLift,
+    updateLiftPrescribedReps,
+    updateSetPrescribedReps,
+    updateLiftSetCount,
   };
 }

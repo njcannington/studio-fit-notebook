@@ -6,17 +6,22 @@ import type { Lift, SetEntry } from '@/lib/mock-data/today-program';
 
 export type EditTarget =
   | { kind: 'reps'; liftId: string; setIndex: number }
-  | { kind: 'weight'; liftId: string };
+  | { kind: 'weight'; liftId: string }
+  | { kind: 'lift-reps'; liftId: string }
+  | { kind: 'set-count'; liftId: string };
 
 type Props = {
   lift: Lift;
   onToggleSet?: (liftId: string, setIndex: number, next: boolean) => void;
   onPressReps?: (liftId: string, setIndex: number) => void;
   onPressWeight?: (liftId: string) => void;
+  onPressLiftReps?: (liftId: string) => void;
+  onPressSetCount?: (liftId: string) => void;
   onLongPress?: (liftId: string) => void;
   activeTarget?: EditTarget | null;
   hideCircles?: boolean;
   readOnly?: boolean;
+  isAdmin?: boolean;
 };
 
 export function LiftRow({
@@ -24,19 +29,24 @@ export function LiftRow({
   onToggleSet,
   onPressReps,
   onPressWeight,
+  onPressLiftReps,
+  onPressSetCount,
   onLongPress,
   activeTarget,
   hideCircles,
   readOnly,
+  isAdmin,
 }: Props) {
   const weightActive =
     activeTarget?.kind === 'weight' && activeTarget.liftId === lift.id;
+  const liftRepsActive =
+    activeTarget?.kind === 'lift-reps' && activeTarget.liftId === lift.id;
+  const setCountActive =
+    activeTarget?.kind === 'set-count' && activeTarget.liftId === lift.id;
 
   const homogeneous = isHomogeneous(lift.sets);
-  const headerLabel = homogeneous
-    ? formatCompactHeader(lift.defaultWeight, lift.sets)
-    : lift.defaultWeight;
   const showSetCells = !(hideCircles && homogeneous);
+  const showSplitHeader = isAdmin && homogeneous && !readOnly;
 
   return (
     <Pressable
@@ -46,16 +56,27 @@ export function LiftRow({
     >
       <View style={styles.headerRow}>
         <Text style={styles.name}>{lift.name}</Text>
-        {headerLabel ? (
-          <Pressable
+        {showSplitHeader ? (
+          <SplitHeader
+            lift={lift}
+            weightActive={weightActive}
+            liftRepsActive={liftRepsActive}
+            setCountActive={setCountActive}
+            onPressWeight={() => onPressWeight?.(lift.id)}
+            onPressLiftReps={() => onPressLiftReps?.(lift.id)}
+            onPressSetCount={() => onPressSetCount?.(lift.id)}
+          />
+        ) : (
+          <SingleHeader
+            label={
+              homogeneous
+                ? formatCompactHeader(lift.defaultWeight, lift.sets)
+                : lift.defaultWeight
+            }
+            active={weightActive}
             onPress={readOnly ? undefined : () => onPressWeight?.(lift.id)}
-            hitSlop={8}
-          >
-            <Text style={[styles.weight, weightActive && styles.activeText]}>
-              {headerLabel}
-            </Text>
-          </Pressable>
-        ) : null}
+          />
+        )}
       </View>
       {showSetCells ? (
         <View style={styles.setsRow}>
@@ -79,6 +100,72 @@ export function LiftRow({
         </View>
       ) : null}
     </Pressable>
+  );
+}
+
+function SingleHeader({
+  label,
+  active,
+  onPress,
+}: {
+  label: string | undefined;
+  active: boolean;
+  onPress?: () => void;
+}) {
+  if (!label) return null;
+  return (
+    <Pressable onPress={onPress} hitSlop={8}>
+      <Text style={[styles.weight, active && styles.activeText]}>{label}</Text>
+    </Pressable>
+  );
+}
+
+function SplitHeader({
+  lift,
+  weightActive,
+  liftRepsActive,
+  setCountActive,
+  onPressWeight,
+  onPressLiftReps,
+  onPressSetCount,
+}: {
+  lift: Lift;
+  weightActive: boolean;
+  liftRepsActive: boolean;
+  setCountActive: boolean;
+  onPressWeight: () => void;
+  onPressLiftReps: () => void;
+  onPressSetCount: () => void;
+}) {
+  const reps = lift.sets[0]?.prescribedReps;
+  const count = lift.sets.length;
+  const unit = lift.sets[0]?.unit;
+  const repsLabel = unit === 'sec' ? `${reps} sec` : String(reps);
+
+  return (
+    <View style={styles.splitHeaderRow}>
+      {lift.defaultWeight ? (
+        <>
+          <Pressable onPress={onPressWeight} hitSlop={8}>
+            <Text style={[styles.weight, weightActive && styles.activeText]}>
+              {lift.defaultWeight}
+            </Text>
+          </Pressable>
+          <Text style={styles.headerSeparator}>×</Text>
+        </>
+      ) : null}
+      <Pressable onPress={onPressLiftReps} hitSlop={8}>
+        <Text style={[styles.weight, liftRepsActive && styles.activeText]}>
+          {repsLabel}
+        </Text>
+      </Pressable>
+      <Text style={styles.headerSeparator}>×</Text>
+      <Pressable onPress={onPressSetCount} hitSlop={8}>
+        <Text style={[styles.weight, setCountActive && styles.activeText]}>
+          {count}
+        </Text>
+      </Pressable>
+    </View>
   );
 }
 
@@ -162,6 +249,16 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
     gap: spacing[3],
     marginBottom: spacing[2],
+  },
+  splitHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: spacing[2],
+  },
+  headerSeparator: {
+    fontFamily: fontFamilies.pencil,
+    fontSize: 18,
+    color: colors.ink.pencilLight,
   },
   name: {
     fontFamily: fontFamilies.pencil,

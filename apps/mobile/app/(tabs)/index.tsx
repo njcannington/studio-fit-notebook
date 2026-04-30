@@ -39,6 +39,9 @@ export default function TodayScreen() {
     addSet,
     removeSet,
     deleteLift,
+    updateLiftPrescribedReps,
+    updateSetPrescribedReps,
+    updateLiftSetCount,
   } = useTodayProgram(viewedProgramId);
   const allPrograms = useAllPrograms();
   const { role } = useRole();
@@ -65,11 +68,29 @@ export default function TodayScreen() {
     if (!lift) return null;
     if (editTarget.kind === 'reps') {
       const set = lift.sets[editTarget.setIndex];
-      const current = set.actualReps ?? set.prescribedReps;
+      const current = isAdmin
+        ? set.prescribedReps
+        : set.actualReps ?? set.prescribedReps;
       return {
         initialValue: String(current),
         allowDecimal: false,
         unitLabel: set.unit === 'sec' ? 'sec' : undefined,
+      };
+    }
+    if (editTarget.kind === 'lift-reps') {
+      const reps = lift.sets[0]?.prescribedReps ?? 0;
+      const unit = lift.sets[0]?.unit;
+      return {
+        initialValue: String(reps),
+        allowDecimal: false,
+        unitLabel: unit === 'sec' ? 'sec' : undefined,
+      };
+    }
+    if (editTarget.kind === 'set-count') {
+      return {
+        initialValue: String(lift.sets.length),
+        allowDecimal: false,
+        unitLabel: 'sets',
       };
     }
     return {
@@ -77,7 +98,7 @@ export default function TodayScreen() {
       allowDecimal: true,
       unitLabel: weightUnitFromLabel(lift.defaultWeight),
     };
-  }, [editTarget, program]);
+  }, [editTarget, program, isAdmin]);
 
   const commit = (raw: string) => {
     if (!editTarget || !program) return;
@@ -90,6 +111,16 @@ export default function TodayScreen() {
       const lift = program.lifts.find(l => l.id === editTarget.liftId);
       const unit = weightUnitFromLabel(lift?.defaultWeight) ?? 'lb';
       updateLiftWeight(editTarget.liftId, `${formatNumber(parsed)} ${unit}`);
+    } else if (editTarget.kind === 'lift-reps') {
+      updateLiftPrescribedReps(editTarget.liftId, Math.max(1, Math.round(parsed)));
+    } else if (editTarget.kind === 'set-count') {
+      updateLiftSetCount(editTarget.liftId, Math.max(1, Math.round(parsed)));
+    } else if (isAdmin) {
+      updateSetPrescribedReps(
+        editTarget.liftId,
+        editTarget.setIndex,
+        Math.max(0, Math.round(parsed)),
+      );
     } else {
       updateActualReps(editTarget.liftId, editTarget.setIndex, parsed);
     }
@@ -119,6 +150,8 @@ export default function TodayScreen() {
             setEditTarget({ kind: 'reps', liftId, setIndex })
           }
           onPressWeight={liftId => setEditTarget({ kind: 'weight', liftId })}
+          onPressLiftReps={liftId => setEditTarget({ kind: 'lift-reps', liftId })}
+          onPressSetCount={liftId => setEditTarget({ kind: 'set-count', liftId })}
           onComplete={() => updateStatus('completed')}
           onLongPressLift={isAdmin ? liftId => setActionLiftId(liftId) : undefined}
           onPublish={() => updateStatus('published')}
@@ -164,6 +197,8 @@ type ProgramViewProps = {
   onToggleSet: (liftId: string, setIndex: number, next: boolean) => void;
   onPressReps: (liftId: string, setIndex: number) => void;
   onPressWeight: (liftId: string) => void;
+  onPressLiftReps: (liftId: string) => void;
+  onPressSetCount: (liftId: string) => void;
   onComplete: () => void;
   onLongPressLift?: (liftId: string) => void;
   onPublish: () => void;
@@ -177,6 +212,8 @@ function ProgramView({
   onToggleSet,
   onPressReps,
   onPressWeight,
+  onPressLiftReps,
+  onPressSetCount,
   onComplete,
   onLongPressLift,
   onPublish,
@@ -197,9 +234,12 @@ function ProgramView({
             onToggleSet={onToggleSet}
             onPressReps={onPressReps}
             onPressWeight={onPressWeight}
+            onPressLiftReps={onPressLiftReps}
+            onPressSetCount={onPressSetCount}
             onLongPress={onLongPressLift}
             hideCircles={isAdmin}
             readOnly={isCompleted}
+            isAdmin={isAdmin}
           />
         ))}
         {allComplete && !isCompleted ? (

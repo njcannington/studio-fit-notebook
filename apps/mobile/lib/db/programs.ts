@@ -159,6 +159,68 @@ export function setSetActualReps(liftId: string, setIndex: number, actualReps: n
   );
 }
 
+export function setLiftPrescribedReps(liftId: string, prescribedReps: number) {
+  const db = getDb();
+  db.runSync(
+    'UPDATE sets SET prescribed_reps = ? WHERE lift_id = ?',
+    [prescribedReps, liftId],
+  );
+}
+
+export function setSetPrescribedReps(liftId: string, setIndex: number, prescribedReps: number) {
+  const db = getDb();
+  db.runSync(
+    'UPDATE sets SET prescribed_reps = ? WHERE lift_id = ? AND sort_order = ?',
+    [prescribedReps, liftId, setIndex],
+  );
+}
+
+export function setLiftSetCount(liftId: string, targetCount: number) {
+  const db = getDb();
+  const current = db.getFirstSync<{ count: number }>(
+    'SELECT COUNT(*) as count FROM sets WHERE lift_id = ?',
+    [liftId],
+  );
+  const currentCount = current?.count ?? 0;
+  if (targetCount === currentCount) return;
+
+  if (targetCount > currentCount) {
+    const last = db.getFirstSync<SetRow>(
+      'SELECT * FROM sets WHERE lift_id = ? ORDER BY sort_order DESC LIMIT 1',
+      [liftId],
+    );
+    db.withTransactionSync(() => {
+      for (let i = currentCount; i < targetCount; i++) {
+        db.runSync(
+          `INSERT INTO sets (id, lift_id, sort_order, prescribed_reps, actual_reps,
+            prescribed_weight, actual_weight, unit, completed)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            `${liftId}-${i}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            liftId,
+            i,
+            last?.prescribed_reps ?? 5,
+            null,
+            last?.prescribed_weight ?? null,
+            null,
+            last?.unit ?? null,
+            0,
+          ],
+        );
+      }
+    });
+  } else {
+    db.withTransactionSync(() => {
+      for (let i = currentCount - 1; i >= targetCount; i--) {
+        db.runSync(
+          'DELETE FROM sets WHERE lift_id = ? AND sort_order = ?',
+          [liftId, i],
+        );
+      }
+    });
+  }
+}
+
 export function setLiftDefaultWeight(liftId: string, weight: string) {
   const db = getDb();
   db.runSync('UPDATE lifts SET default_weight = ? WHERE id = ?', [weight, liftId]);
