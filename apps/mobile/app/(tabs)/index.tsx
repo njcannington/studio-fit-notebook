@@ -134,7 +134,9 @@ export default function TodayScreen() {
       <TopBar
         dateLabel={dateLabelForBar}
         isAdmin={isAdmin}
+        showTodayJump={viewedProgramId !== todayProgramId()}
         onPressDate={() => setPickerOpen(true)}
+        onPressToday={() => setViewedProgramId(todayProgramId())}
       />
       {!program ? (
         <NoProgramForDate />
@@ -314,11 +316,15 @@ function NoProgramForDate() {
 function TopBar({
   dateLabel,
   isAdmin,
+  showTodayJump,
   onPressDate,
+  onPressToday,
 }: {
   dateLabel: string;
   isAdmin: boolean;
+  showTodayJump?: boolean;
   onPressDate?: () => void;
+  onPressToday?: () => void;
 }) {
   return (
     <View style={styles.topBar}>
@@ -330,6 +336,11 @@ function TopBar({
           {dateLabel}
         </Text>
       </Pressable>
+      {showTodayJump ? (
+        <Pressable onPress={onPressToday} hitSlop={8} style={styles.todayPill}>
+          <Text style={styles.todayPillText}>Today</Text>
+        </Pressable>
+      ) : null}
       {isAdmin ? (
         <View style={styles.editingPill}>
           <Text style={styles.editingPillText}>Editing</Text>
@@ -454,6 +465,21 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1.2,
     fontWeight: '600',
+  },
+  todayPill: {
+    paddingHorizontal: spacing[2],
+    paddingVertical: 4,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: colors.iron.light,
+    marginRight: spacing[2],
+  },
+  todayPillText: {
+    fontFamily: fontFamilies.block,
+    fontSize: 10,
+    color: colors.paper.cream,
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
   },
   publishButton: {
     backgroundColor: colors.rust.base,
