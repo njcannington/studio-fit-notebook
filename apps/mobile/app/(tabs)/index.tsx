@@ -3,14 +3,16 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fontFamilies, spacing, tapTargetMin } from '@studio-fit/design-tokens';
 import { ActionSheet, type ActionItem } from '@/components/action-sheet';
+import { DatePickerSheet } from '@/components/date-picker';
 import { WavyDivider } from '@/components/divider';
 import { ChevronLeftIcon, PencilIcon } from '@/components/icons';
 import { NumberPad } from '@/components/number-pad';
 import { PaperCard } from '@/components/paper-card';
 import { LiftRow, type EditTarget } from '@/components/program';
+import { useAllPrograms } from '@/lib/db/use-all-programs';
 import { useRole } from '@/lib/db/use-role';
 import { useTodayProgram } from '@/lib/db/use-today-program';
-import type { Program } from '@/lib/mock-data/today-program';
+import { todayProgramId, type Program } from '@/lib/mock-data/today-program';
 
 const LIFT_ACTIONS: ActionItem[] = [
   { id: 'add-set', label: 'Add set' },
@@ -19,6 +21,7 @@ const LIFT_ACTIONS: ActionItem[] = [
 ];
 
 export default function TodayScreen() {
+  const [viewedProgramId, setViewedProgramId] = useState<string>(() => todayProgramId());
   const {
     program,
     toggleSet,
@@ -28,11 +31,13 @@ export default function TodayScreen() {
     addSet,
     removeSet,
     deleteLift,
-  } = useTodayProgram();
+  } = useTodayProgram(viewedProgramId);
+  const allPrograms = useAllPrograms();
   const { role } = useRole();
   const isAdmin = role === 'admin';
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
   const [actionLiftId, setActionLiftId] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const handleAction = (id: string) => {
     if (!actionLiftId) return;
@@ -83,14 +88,18 @@ export default function TodayScreen() {
     setEditTarget(null);
   };
 
-  if (!program) {
-    return <SafeAreaView style={styles.root} edges={['top', 'left', 'right']} />;
-  }
+  const dateLabelForBar = program?.dateShort ?? viewedProgramId;
 
   return (
     <SafeAreaView style={styles.root} edges={['top', 'left', 'right']}>
-      <TopBar dateLabel={program.dateShort} isAdmin={isAdmin} />
-      {program.status === 'draft' && !isAdmin ? (
+      <TopBar
+        dateLabel={dateLabelForBar}
+        isAdmin={isAdmin}
+        onPressDate={() => setPickerOpen(true)}
+      />
+      {!program ? (
+        <NoProgramForDate />
+      ) : program.status === 'draft' && !isAdmin ? (
         <EmptyState />
       ) : (
         <ProgramView
@@ -115,6 +124,17 @@ export default function TodayScreen() {
         actions={LIFT_ACTIONS}
         onSelect={handleAction}
         onCancel={() => setActionLiftId(null)}
+      />
+
+      <DatePickerSheet
+        visible={pickerOpen}
+        programs={allPrograms}
+        selectedId={viewedProgramId}
+        onSelect={id => {
+          setViewedProgramId(id);
+          setPickerOpen(false);
+        }}
+        onCancel={() => setPickerOpen(false)}
       />
 
       <NumberPad
@@ -230,15 +250,36 @@ function EmptyState() {
   );
 }
 
-function TopBar({ dateLabel, isAdmin }: { dateLabel: string; isAdmin: boolean }) {
+function NoProgramForDate() {
+  return (
+    <View style={styles.empty}>
+      <Text style={styles.emptyHeadline}>No program for this date.</Text>
+      <Text style={styles.emptyBody}>
+        Tap the date above to jump to a different day.
+      </Text>
+    </View>
+  );
+}
+
+function TopBar({
+  dateLabel,
+  isAdmin,
+  onPressDate,
+}: {
+  dateLabel: string;
+  isAdmin: boolean;
+  onPressDate?: () => void;
+}) {
   return (
     <View style={styles.topBar}>
       <Pressable style={styles.iconButton} hitSlop={8}>
         <ChevronLeftIcon size={28} color={colors.iron.stencil} />
       </Pressable>
-      <Text style={styles.dateLabel} numberOfLines={1}>
-        {dateLabel}
-      </Text>
+      <Pressable onPress={onPressDate} hitSlop={8} style={styles.dateLabelWrapper}>
+        <Text style={styles.dateLabel} numberOfLines={1}>
+          {dateLabel}
+        </Text>
+      </Pressable>
       {isAdmin ? (
         <View style={styles.editingPill}>
           <Text style={styles.editingPillText}>Editing</Text>
@@ -287,9 +328,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dateLabel: {
+  dateLabelWrapper: {
     flex: 1,
-    textAlign: 'center',
+    alignItems: 'center',
+  },
+  dateLabel: {
     fontFamily: fontFamilies.display,
     fontSize: 28,
     color: colors.paper.cream,
