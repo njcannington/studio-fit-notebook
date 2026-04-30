@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fontFamilies, spacing, tapTargetMin } from '@studio-fit/design-tokens';
 import { WavyDivider } from '@/components/divider';
+import { ChevronLeftIcon, PencilIcon } from '@/components/icons';
 import { NumberPad } from '@/components/number-pad';
 import { PaperCard } from '@/components/paper-card';
 import { LiftRow, type EditTarget } from '@/components/program';
@@ -156,7 +157,9 @@ function CompletedLabel({ dateLabel }: { dateLabel: string }) {
 function EmptyState() {
   return (
     <View style={styles.empty}>
-      <Text style={styles.emptyGlyph}>✎</Text>
+      <View style={styles.emptyIcon}>
+        <PencilIcon size={96} color={colors.iron.light} />
+      </View>
       <Text style={styles.emptyHeadline}>Your program isn't ready yet.</Text>
       <Text style={styles.emptyBody}>
         Hang tight — your trainer will share it soon.
@@ -169,13 +172,13 @@ function TopBar({ dateLabel }: { dateLabel: string }) {
   return (
     <View style={styles.topBar}>
       <Pressable style={styles.iconButton} hitSlop={8}>
-        <Text style={styles.iconText}>‹</Text>
+        <ChevronLeftIcon size={28} color={colors.iron.stencil} />
       </Pressable>
       <Text style={styles.dateLabel} numberOfLines={1}>
         {dateLabel}
       </Text>
       <Pressable style={styles.iconButton} hitSlop={8}>
-        <Text style={styles.syncText}>✎</Text>
+        <PencilIcon size={22} color={colors.paper.margin} />
       </Pressable>
     </View>
   );
@@ -216,17 +219,6 @@ const styles = StyleSheet.create({
     height: tapTargetMin,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  iconText: {
-    color: colors.iron.stencil,
-    fontSize: 28,
-    lineHeight: 32,
-    fontFamily: fontFamilies.block,
-  },
-  syncText: {
-    color: colors.paper.margin,
-    fontSize: 18,
-    fontFamily: fontFamilies.pencil,
   },
   dateLabel: {
     flex: 1,
@@ -285,10 +277,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing[8],
     alignItems: 'center',
   },
-  emptyGlyph: {
-    fontFamily: fontFamilies.pencil,
-    fontSize: 96,
-    color: colors.iron.light,
+  emptyIcon: {
     marginBottom: spacing[5],
   },
   emptyHeadline: {

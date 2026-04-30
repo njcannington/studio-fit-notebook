@@ -1,14 +1,44 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fontFamilies, spacing } from '@studio-fit/design-tokens';
+import { useTodayProgram } from '@/lib/db/use-today-program';
+
+const STATUSES: Array<'draft' | 'published' | 'completed'> = [
+  'draft',
+  'published',
+  'completed',
+];
 
 export default function MeScreen() {
+  const { program, updateStatus } = useTodayProgram();
+
   return (
     <SafeAreaView style={styles.root} edges={['top', 'left', 'right']}>
-      <View style={styles.body}>
+      <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.headline}>Me</Text>
-        <Text style={styles.body_text}>Profile and settings will live here.</Text>
-      </View>
+        <Text style={styles.body}>Profile and settings will live here.</Text>
+
+        <Text style={styles.sectionTitle}>Dev · Today's program status</Text>
+        <Text style={styles.helper}>
+          Current: {program?.status ?? 'loading…'}
+        </Text>
+        <View style={styles.row}>
+          {STATUSES.map(status => {
+            const active = program?.status === status;
+            return (
+              <Pressable
+                key={status}
+                onPress={() => updateStatus(status)}
+                style={[styles.button, active && styles.buttonActive]}
+              >
+                <Text style={[styles.buttonText, active && styles.buttonTextActive]}>
+                  {status}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -18,22 +48,64 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.iron.deep,
   },
-  body: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing[6],
-    gap: spacing[3],
+  content: {
+    padding: spacing[5],
+    gap: spacing[2],
   },
   headline: {
     fontFamily: fontFamilies.display,
     fontSize: 36,
     color: colors.iron.stencil,
   },
-  body_text: {
+  body: {
     fontFamily: fontFamilies.pencil,
     fontSize: 18,
     color: colors.ink.pencilFaded,
-    textAlign: 'center',
+    marginBottom: spacing[6],
+  },
+  sectionTitle: {
+    fontFamily: fontFamilies.block,
+    fontSize: 11,
+    letterSpacing: 1.1,
+    textTransform: 'uppercase',
+    color: colors.ink.pencilFaded,
+    marginTop: spacing[4],
+    paddingBottom: spacing[2],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.iron.light,
+  },
+  helper: {
+    fontFamily: fontFamilies.pencil,
+    fontSize: 14,
+    color: colors.iron.stencil,
+    marginTop: spacing[2],
+  },
+  row: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing[3],
+    marginTop: spacing[3],
+  },
+  button: {
+    backgroundColor: colors.iron.base,
+    borderWidth: 1,
+    borderColor: colors.iron.light,
+    paddingVertical: spacing[2],
+    paddingHorizontal: spacing[4],
+    borderRadius: 6,
+  },
+  buttonActive: {
+    backgroundColor: colors.rust.base,
+    borderColor: colors.rust.deep,
+  },
+  buttonText: {
+    fontFamily: fontFamilies.block,
+    fontSize: 14,
+    color: colors.paper.cream,
+    textTransform: 'uppercase',
+    letterSpacing: 0.7,
+  },
+  buttonTextActive: {
+    fontWeight: '600',
   },
 });

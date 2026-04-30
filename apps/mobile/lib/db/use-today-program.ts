@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import {
   loadTodayProgram,
   seedTodayProgramIfEmpty,
@@ -12,10 +13,12 @@ import type { Program } from '@/lib/mock-data/today-program';
 export function useTodayProgram() {
   const [program, setProgram] = useState<Program | null>(null);
 
-  useEffect(() => {
-    const initial = seedTodayProgramIfEmpty();
-    setProgram(initial);
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const fresh = seedTodayProgramIfEmpty();
+      setProgram(fresh);
+    }, []),
+  );
 
   const toggleSet = (liftId: string, setIndex: number, next: boolean) => {
     setSetCompleted(liftId, setIndex, next);
