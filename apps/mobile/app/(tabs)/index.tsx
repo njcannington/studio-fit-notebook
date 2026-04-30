@@ -5,30 +5,14 @@ import { colors, fontFamilies, spacing, tapTargetMin } from '@studio-fit/design-
 import { NumberPad } from '@/components/number-pad';
 import { PaperCard } from '@/components/paper-card';
 import { LiftRow, type EditTarget } from '@/components/program';
-import { todayProgram, type Program } from '@/lib/mock-data/today-program';
+import { useTodayProgram } from '@/lib/db/use-today-program';
 
 export default function TodayScreen() {
-  const [program, setProgram] = useState<Program>(todayProgram);
+  const { program, toggleSet, updateActualReps, updateLiftWeight } = useTodayProgram();
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
 
-  const toggleSet = (liftId: string, setIndex: number, next: boolean) => {
-    setProgram(current => ({
-      ...current,
-      lifts: current.lifts.map(lift =>
-        lift.id === liftId
-          ? {
-              ...lift,
-              sets: lift.sets.map((set, idx) =>
-                idx === setIndex ? { ...set, completed: next } : set
-              ),
-            }
-          : lift
-      ),
-    }));
-  };
-
   const editContext = useMemo(() => {
-    if (!editTarget) return null;
+    if (!editTarget || !program) return null;
     const lift = program.lifts.find(l => l.id === editTarget.liftId);
     if (!lift) return null;
     if (editTarget.kind === 'reps') {
@@ -48,30 +32,25 @@ export default function TodayScreen() {
   }, [editTarget, program]);
 
   const commit = (raw: string) => {
-    if (!editTarget) return;
+    if (!editTarget || !program) return;
     const parsed = Number.parseFloat(raw);
     if (Number.isNaN(parsed)) {
       setEditTarget(null);
       return;
     }
-    setProgram(current => ({
-      ...current,
-      lifts: current.lifts.map(lift => {
-        if (lift.id !== editTarget.liftId) return lift;
-        if (editTarget.kind === 'weight') {
-          const unit = weightUnitFromLabel(lift.defaultWeight) ?? 'lb';
-          return { ...lift, defaultWeight: `${formatNumber(parsed)} ${unit}` };
-        }
-        return {
-          ...lift,
-          sets: lift.sets.map((set, idx) =>
-            idx === editTarget.setIndex ? { ...set, actualReps: parsed } : set
-          ),
-        };
-      }),
-    }));
+    if (editTarget.kind === 'weight') {
+      const lift = program.lifts.find(l => l.id === editTarget.liftId);
+      const unit = weightUnitFromLabel(lift?.defaultWeight) ?? 'lb';
+      updateLiftWeight(editTarget.liftId, `${formatNumber(parsed)} ${unit}`);
+    } else {
+      updateActualReps(editTarget.liftId, editTarget.setIndex, parsed);
+    }
     setEditTarget(null);
   };
+
+  if (!program) {
+    return <SafeAreaView style={styles.root} edges={['top', 'left', 'right']} />;
+  }
 
   return (
     <SafeAreaView style={styles.root} edges={['top', 'left', 'right']}>
