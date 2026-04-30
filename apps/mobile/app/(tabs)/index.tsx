@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fontFamilies, spacing, tapTargetMin } from '@studio-fit/design-tokens';
@@ -21,7 +22,14 @@ const LIFT_ACTIONS: ActionItem[] = [
 ];
 
 export default function TodayScreen() {
+  const params = useLocalSearchParams<{ date?: string }>();
   const [viewedProgramId, setViewedProgramId] = useState<string>(() => todayProgramId());
+
+  useEffect(() => {
+    if (params.date && params.date !== viewedProgramId) {
+      setViewedProgramId(params.date);
+    }
+  }, [params.date, viewedProgramId]);
   const {
     program,
     toggleSet,
