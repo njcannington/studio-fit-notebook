@@ -89,13 +89,14 @@ export default function TodayScreen() {
 
   return (
     <SafeAreaView style={styles.root} edges={['top', 'left', 'right']}>
-      <TopBar dateLabel={program.dateShort} />
+      <TopBar dateLabel={program.dateShort} isAdmin={isAdmin} />
       {program.status === 'draft' && !isAdmin ? (
         <EmptyState />
       ) : (
         <ProgramView
           program={program}
           editTarget={editTarget}
+          isAdmin={isAdmin}
           onToggleSet={toggleSet}
           onPressReps={(liftId, setIndex) =>
             setEditTarget({ kind: 'reps', liftId, setIndex })
@@ -103,6 +104,8 @@ export default function TodayScreen() {
           onPressWeight={liftId => setEditTarget({ kind: 'weight', liftId })}
           onComplete={() => updateStatus('completed')}
           onLongPressLift={isAdmin ? liftId => setActionLiftId(liftId) : undefined}
+          onPublish={() => updateStatus('published')}
+          onUnpublish={() => updateStatus('draft')}
         />
       )}
 
@@ -129,21 +132,27 @@ export default function TodayScreen() {
 type ProgramViewProps = {
   program: Program;
   editTarget: EditTarget | null;
+  isAdmin: boolean;
   onToggleSet: (liftId: string, setIndex: number, next: boolean) => void;
   onPressReps: (liftId: string, setIndex: number) => void;
   onPressWeight: (liftId: string) => void;
   onComplete: () => void;
   onLongPressLift?: (liftId: string) => void;
+  onPublish: () => void;
+  onUnpublish: () => void;
 };
 
 function ProgramView({
   program,
   editTarget,
+  isAdmin,
   onToggleSet,
   onPressReps,
   onPressWeight,
   onComplete,
   onLongPressLift,
+  onPublish,
+  onUnpublish,
 }: ProgramViewProps) {
   const allComplete = program.lifts.every(lift => lift.sets.every(s => s.completed));
   const isCompleted = program.status === 'completed';
@@ -167,6 +176,16 @@ function ProgramView({
           <CompletionFooter dateLabel={program.dateShort} onComplete={onComplete} />
         ) : null}
       </PaperCard>
+      {isAdmin && program.status === 'draft' ? (
+        <Pressable style={styles.publishButton} onPress={onPublish}>
+          <Text style={styles.publishText}>Publish</Text>
+        </Pressable>
+      ) : null}
+      {isAdmin && program.status === 'published' ? (
+        <Pressable style={styles.unpublishLink} onPress={onUnpublish} hitSlop={8}>
+          <Text style={styles.unpublishText}>Unpublish</Text>
+        </Pressable>
+      ) : null}
     </ScrollView>
   );
 }
@@ -211,7 +230,7 @@ function EmptyState() {
   );
 }
 
-function TopBar({ dateLabel }: { dateLabel: string }) {
+function TopBar({ dateLabel, isAdmin }: { dateLabel: string; isAdmin: boolean }) {
   return (
     <View style={styles.topBar}>
       <Pressable style={styles.iconButton} hitSlop={8}>
@@ -220,6 +239,11 @@ function TopBar({ dateLabel }: { dateLabel: string }) {
       <Text style={styles.dateLabel} numberOfLines={1}>
         {dateLabel}
       </Text>
+      {isAdmin ? (
+        <View style={styles.editingPill}>
+          <Text style={styles.editingPillText}>Editing</Text>
+        </View>
+      ) : null}
       <Pressable style={styles.iconButton} hitSlop={8}>
         <PencilIcon size={22} color={colors.paper.margin} />
       </Pressable>
@@ -322,6 +346,50 @@ const styles = StyleSheet.create({
   },
   emptyIcon: {
     marginBottom: spacing[5],
+  },
+  editingPill: {
+    backgroundColor: colors.rust.base,
+    paddingHorizontal: spacing[2],
+    paddingVertical: 4,
+    borderRadius: 4,
+    marginRight: spacing[2],
+  },
+  editingPillText: {
+    fontFamily: fontFamilies.block,
+    fontSize: 10,
+    color: colors.paper.cream,
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    fontWeight: '600',
+  },
+  publishButton: {
+    backgroundColor: colors.rust.base,
+    borderRadius: 8,
+    paddingVertical: spacing[4],
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing[5],
+  },
+  publishText: {
+    fontFamily: fontFamilies.block,
+    fontSize: 18,
+    color: colors.paper.cream,
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    fontWeight: '600',
+  },
+  unpublishLink: {
+    alignSelf: 'center',
+    marginTop: spacing[4],
+    paddingVertical: spacing[2],
+    paddingHorizontal: spacing[3],
+  },
+  unpublishText: {
+    fontFamily: fontFamilies.block,
+    fontSize: 12,
+    color: colors.ink.pencilLight,
+    textTransform: 'uppercase',
+    letterSpacing: 0.7,
   },
   emptyHeadline: {
     fontFamily: fontFamilies.display,
