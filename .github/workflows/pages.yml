@@ -35,6 +35,11 @@ jobs:
         working-directory: apps/mobile
         run: pnpm exec expo export --platform web --output-dir dist
 
+      - name: Bundle static mockup at /mockup
+        run: |
+          mkdir -p apps/mobile/dist/mockup
+          cp "docs/references/Studio Fit Notebook - shareable.html" apps/mobile/dist/mockup/index.html
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: apps/mobile/dist
