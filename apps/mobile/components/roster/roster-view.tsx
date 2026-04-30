@@ -22,9 +22,10 @@ type Props = {
   rows: RosterRow[];
   onPressClient: (rosterRow: RosterRow) => void;
   onPublishAll?: () => void;
+  onPressAddClient?: () => void;
 };
 
-export function RosterView({ rows, onPressClient, onPublishAll }: Props) {
+export function RosterView({ rows, onPressClient, onPublishAll, onPressAddClient }: Props) {
   const draftCount = rows.filter(r => r.program?.status === 'draft').length;
   const allPublished = rows.length > 0 && draftCount === 0;
 
@@ -62,6 +63,15 @@ export function RosterView({ rows, onPressClient, onPublishAll }: Props) {
           </Pressable>
         ))}
       </View>
+
+      {onPressAddClient ? (
+        <Pressable
+          onPress={onPressAddClient}
+          style={({ pressed }) => [styles.addClient, pressed && styles.addClientPressed]}
+        >
+          <Text style={styles.addClientText}>+ Add client to today</Text>
+        </Pressable>
+      ) : null}
     </ScrollView>
   );
 }
@@ -169,5 +179,24 @@ const styles = StyleSheet.create({
     fontSize: 10,
     textTransform: 'uppercase',
     letterSpacing: 1,
+  },
+  addClient: {
+    marginTop: spacing[4],
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[4],
+    borderWidth: 1,
+    borderColor: colors.iron.light,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  addClientPressed: {
+    backgroundColor: colors.iron.base,
+  },
+  addClientText: {
+    fontFamily: fontFamilies.block,
+    fontSize: 12,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: colors.paper.cream,
   },
 });

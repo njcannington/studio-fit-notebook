@@ -33,3 +33,8 @@ export function insertClient(client: Client) {
     [client.id, client.name, client.time ?? null],
   );
 }
+
+export function setClientTime(clientId: string, time: string | null) {
+  const db = getDb();
+  db.runSync('UPDATE clients SET time = ? WHERE id = ?', [time, clientId]);
+}

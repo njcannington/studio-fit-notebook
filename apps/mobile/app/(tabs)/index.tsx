@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fontFamilies, spacing, tapTargetMin } from '@studio-fit/design-tokens';
 import { ActionSheet, type ActionItem } from '@/components/action-sheet';
+import { ClientPickerSheet } from '@/components/client-picker';
 import { DatePickerSheet } from '@/components/date-picker';
 import { WavyDivider } from '@/components/divider';
 import { ChevronLeftIcon, PencilIcon } from '@/components/icons';
@@ -12,6 +13,7 @@ import { PaperCard } from '@/components/paper-card';
 import { LiftRow, type EditTarget } from '@/components/program';
 import { RosterView } from '@/components/roster';
 import { useClientPrograms } from '@/lib/db/use-all-programs';
+import { useClients } from '@/lib/db/use-clients';
 import { useRole } from '@/lib/db/use-role';
 import { useTodayRoster } from '@/lib/db/use-roster';
 import { useTodayProgram } from '@/lib/db/use-today-program';
@@ -54,10 +56,12 @@ export default function TodayScreen() {
     updateLiftSetCount,
   } = useTodayProgram(viewedProgramId ?? undefined);
   const allPrograms = useClientPrograms(DEFAULT_CLIENT_ID);
-  const rosterRows = useTodayRoster();
+  const { rows: rosterRows, refresh: refreshRoster } = useTodayRoster();
+  const { clients, setClientTime } = useClients();
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
   const [actionLiftId, setActionLiftId] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [clientPickerOpen, setClientPickerOpen] = useState(false);
 
   const handleAction = (id: string) => {
     if (!actionLiftId) return;
@@ -165,7 +169,11 @@ export default function TodayScreen() {
         onPressToday={() => setViewedProgramId(todayProgramId())}
       />
       {showRoster ? (
-        <RosterView rows={rosterRows} onPressClient={handleRosterRowPress} />
+        <RosterView
+          rows={rosterRows}
+          onPressClient={handleRosterRowPress}
+          onPressAddClient={() => setClientPickerOpen(true)}
+        />
       ) : !program ? (
         <NoProgramForDate />
       ) : program.status === 'draft' && !isAdmin ? (
@@ -206,6 +214,18 @@ export default function TodayScreen() {
           setPickerOpen(false);
         }}
         onCancel={() => setPickerOpen(false)}
+      />
+
+      <ClientPickerSheet
+        visible={clientPickerOpen}
+        clients={clients}
+        excludeIds={rosterRows.map(r => r.client.id)}
+        onSelect={clientId => {
+          setClientTime(clientId, defaultSessionTime());
+          refreshRoster();
+          setClientPickerOpen(false);
+        }}
+        onCancel={() => setClientPickerOpen(false)}
       />
 
       <NumberPad
@@ -408,6 +428,14 @@ function weightUnitFromLabel(weight: string | undefined) {
 
 function formatNumber(value: number) {
   return Number.isInteger(value) ? String(value) : String(value);
+}
+
+function defaultSessionTime(): string {
+  const now = new Date();
+  const hour = now.getHours();
+  const display = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+  const ampm = hour < 12 ? 'am' : 'pm';
+  return `${display}:00 ${ampm}`;
 }
 
 const styles = StyleSheet.create({

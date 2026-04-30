@@ -9,27 +9,31 @@ export type RosterRow = {
   program: Program | null;
 };
 
+function loadRoster(): RosterRow[] {
+  const clients = loadClients();
+  const programs = loadProgramsForDate(todayIso());
+  const programByClient = new Map(programs.map(p => [p.clientId, p]));
+  // Today's roster = clients with a session time set, plus anyone who has
+  // a program for today regardless of time (e.g. walk-ins added by trainer).
+  return clients
+    .filter(c => c.time || programByClient.has(c.id))
+    .map(client => ({
+      client,
+      program: programByClient.get(client.id) ?? null,
+    }));
+}
+
 export function useTodayRoster() {
   const [rows, setRows] = useState<RosterRow[]>([]);
 
   useFocusEffect(
     useCallback(() => {
       seedAllIfEmpty();
-      const clients = loadClients();
-      const programs = loadProgramsForDate(todayIso());
-      const programByClient = new Map(programs.map(p => [p.clientId, p]));
-      // Today's roster = clients with a session time set, plus anyone who has
-      // a program for today regardless of time (e.g. walk-ins added by trainer).
-      setRows(
-        clients
-          .filter(c => c.time || programByClient.has(c.id))
-          .map(client => ({
-            client,
-            program: programByClient.get(client.id) ?? null,
-          })),
-      );
+      setRows(loadRoster());
     }, []),
   );
 
-  return rows;
+  const refresh = () => setRows(loadRoster());
+
+  return { rows, refresh };
 }
