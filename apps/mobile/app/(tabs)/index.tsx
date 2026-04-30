@@ -10,10 +10,13 @@ import { ChevronLeftIcon, PencilIcon } from '@/components/icons';
 import { NumberPad } from '@/components/number-pad';
 import { PaperCard } from '@/components/paper-card';
 import { LiftRow, type EditTarget } from '@/components/program';
-import { useAllPrograms } from '@/lib/db/use-all-programs';
+import { useClientPrograms } from '@/lib/db/use-all-programs';
 import { useRole } from '@/lib/db/use-role';
 import { useTodayProgram } from '@/lib/db/use-today-program';
-import { todayProgramId, type Program } from '@/lib/mock-data/today-program';
+import { programIdFor, todayIso, type Program } from '@/lib/mock-data/today-program';
+
+const DEFAULT_CLIENT_ID = 'nic';
+const todayProgramId = () => programIdFor(DEFAULT_CLIENT_ID, todayIso());
 
 const LIFT_ACTIONS: ActionItem[] = [
   { id: 'add-set', label: 'Add set' },
@@ -43,7 +46,7 @@ export default function TodayScreen() {
     updateSetPrescribedReps,
     updateLiftSetCount,
   } = useTodayProgram(viewedProgramId);
-  const allPrograms = useAllPrograms();
+  const allPrograms = useClientPrograms(DEFAULT_CLIENT_ID);
   const { role } = useRole();
   const isAdmin = role === 'admin';
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null);

@@ -2,8 +2,10 @@ import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fontFamilies, spacing } from '@studio-fit/design-tokens';
-import { useAllPrograms } from '@/lib/db/use-all-programs';
+import { useClientPrograms } from '@/lib/db/use-all-programs';
 import type { Program } from '@/lib/mock-data/today-program';
+
+const DEFAULT_CLIENT_ID = 'nic';
 
 const STATUS_COLORS = {
   draft: { bg: colors.iron.light, fg: colors.ink.pencilFaded },
@@ -12,7 +14,7 @@ const STATUS_COLORS = {
 } as const;
 
 export default function HistoryScreen() {
-  const programs = useAllPrograms();
+  const programs = useClientPrograms(DEFAULT_CLIENT_ID);
 
   const open = (id: string) => {
     router.navigate({ pathname: '/(tabs)', params: { date: id } });

@@ -1,12 +1,23 @@
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export const SCHEMA_SQL = `
+CREATE TABLE IF NOT EXISTS clients (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  time TEXT
+);
+
 CREATE TABLE IF NOT EXISTS programs (
   id TEXT PRIMARY KEY,
+  client_id TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
   date TEXT NOT NULL,
   date_short TEXT NOT NULL,
+  date_iso TEXT NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('draft', 'published', 'completed'))
 );
+
+CREATE INDEX IF NOT EXISTS idx_programs_client_id ON programs(client_id);
+CREATE INDEX IF NOT EXISTS idx_programs_date_iso ON programs(date_iso);
 
 CREATE TABLE IF NOT EXISTS lifts (
   id TEXT PRIMARY KEY,

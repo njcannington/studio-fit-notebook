@@ -5,7 +5,7 @@ import {
   loadProgram,
   removeLastSetFromLift,
   removeLift,
-  seedProgramsIfEmpty,
+  seedAllIfEmpty,
   setLiftDefaultWeight,
   setLiftPrescribedReps,
   setLiftSetCount,
@@ -14,15 +14,17 @@ import {
   setSetCompleted,
   setSetPrescribedReps,
 } from './programs';
-import { todayProgramId, type Program } from '@/lib/mock-data/today-program';
+import { programIdFor, todayIso, type Program } from '@/lib/mock-data/today-program';
+
+const DEFAULT_CLIENT_ID = 'nic';
 
 export function useTodayProgram(programIdOverride?: string) {
-  const programId = programIdOverride ?? todayProgramId();
+  const programId = programIdOverride ?? programIdFor(DEFAULT_CLIENT_ID, todayIso());
   const [program, setProgram] = useState<Program | null>(null);
 
   useFocusEffect(
     useCallback(() => {
-      seedProgramsIfEmpty();
+      seedAllIfEmpty();
       const loaded = loadProgram(programId);
       setProgram(loaded);
     }, [programId]),

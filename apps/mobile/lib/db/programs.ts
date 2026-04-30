@@ -1,11 +1,13 @@
 import { getDb } from './index';
-import { seedPrograms } from '@/lib/mock-data/today-program';
+import { seedClients, seedPrograms } from '@/lib/mock-data/today-program';
 import type { Lift, Program, SetEntry } from '@/lib/mock-data/today-program';
 
 type ProgramRow = {
   id: string;
+  client_id: string;
   date: string;
   date_short: string;
+  date_iso: string;
   status: 'draft' | 'published' | 'completed';
 };
 
@@ -53,6 +55,22 @@ function rowToLift(db: ReturnType<typeof getDb>, row: LiftRow): Lift {
   };
 }
 
+function rowToProgram(db: ReturnType<typeof getDb>, row: ProgramRow): Program {
+  const liftRows = db.getAllSync<LiftRow>(
+    'SELECT * FROM lifts WHERE program_id = ? ORDER BY sort_order',
+    [row.id],
+  );
+  return {
+    id: row.id,
+    clientId: row.client_id,
+    date: row.date,
+    dateShort: row.date_short,
+    dateIso: row.date_iso,
+    status: row.status,
+    lifts: liftRows.map(lift => rowToLift(db, lift)),
+  };
+}
+
 export function loadProgram(programId: string): Program | null {
   const db = getDb();
   const row = db.getFirstSync<ProgramRow>(
@@ -60,56 +78,66 @@ export function loadProgram(programId: string): Program | null {
     [programId],
   );
   if (!row) return null;
-
-  const liftRows = db.getAllSync<LiftRow>(
-    'SELECT * FROM lifts WHERE program_id = ? ORDER BY sort_order',
-    [row.id],
-  );
-
-  return {
-    id: row.id,
-    date: row.date,
-    dateShort: row.date_short,
-    status: row.status,
-    lifts: liftRows.map(lift => rowToLift(db, lift)),
-  };
+  return rowToProgram(db, row);
 }
 
 export function loadAllPrograms(): Program[] {
   const db = getDb();
   const rows = db.getAllSync<ProgramRow>(
-    'SELECT * FROM programs ORDER BY id DESC',
+    'SELECT * FROM programs ORDER BY date_iso DESC',
   );
-  return rows.map(row => {
-    const liftRows = db.getAllSync<LiftRow>(
-      'SELECT * FROM lifts WHERE program_id = ? ORDER BY sort_order',
-      [row.id],
-    );
-    return {
-      id: row.id,
-      date: row.date,
-      dateShort: row.date_short,
-      status: row.status,
-      lifts: liftRows.map(lift => rowToLift(db, lift)),
-    };
-  });
+  return rows.map(row => rowToProgram(db, row));
 }
 
-export function seedProgramsIfEmpty(): Program[] {
+export function loadProgramsForDate(dateIso: string): Program[] {
+  const db = getDb();
+  const rows = db.getAllSync<ProgramRow>(
+    'SELECT * FROM programs WHERE date_iso = ?',
+    [dateIso],
+  );
+  return rows.map(row => rowToProgram(db, row));
+}
+
+export function loadProgramsForClient(clientId: string): Program[] {
+  const db = getDb();
+  const rows = db.getAllSync<ProgramRow>(
+    'SELECT * FROM programs WHERE client_id = ? ORDER BY date_iso DESC',
+    [clientId],
+  );
+  return rows.map(row => rowToProgram(db, row));
+}
+
+export function seedAllIfEmpty(): { programs: Program[] } {
   const db = getDb();
   const existing = db.getFirstSync<{ count: number }>(
-    'SELECT COUNT(*) as count FROM programs',
+    'SELECT COUNT(*) as count FROM clients',
   );
   if ((existing?.count ?? 0) > 0) {
-    return loadAllPrograms();
+    return { programs: loadAllPrograms() };
   }
 
+  const clients = seedClients();
   const programs = seedPrograms();
+
   db.withTransactionSync(() => {
+    clients.forEach(client => {
+      db.runSync(
+        'INSERT INTO clients (id, name, time) VALUES (?, ?, ?)',
+        [client.id, client.name, client.time ?? null],
+      );
+    });
     programs.forEach(program => {
       db.runSync(
-        'INSERT INTO programs (id, date, date_short, status) VALUES (?, ?, ?, ?)',
-        [program.id, program.date, program.dateShort, program.status],
+        `INSERT INTO programs (id, client_id, date, date_short, date_iso, status)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          program.id,
+          program.clientId,
+          program.date,
+          program.dateShort,
+          program.dateIso,
+          program.status,
+        ],
       );
       program.lifts.forEach((lift, liftIdx) => {
         db.runSync(
@@ -138,7 +166,7 @@ export function seedProgramsIfEmpty(): Program[] {
     });
   });
 
-  return loadAllPrograms();
+  return { programs: loadAllPrograms() };
 }
 
 export function setSetCompleted(liftId: string, setIndex: number, completed: boolean) {

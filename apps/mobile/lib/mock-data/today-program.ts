@@ -16,10 +16,18 @@ export type Lift = {
 
 export type Program = {
   id: string;
+  clientId: string;
   date: string;
   dateShort: string;
+  dateIso: string;
   lifts: Lift[];
   status: 'draft' | 'published' | 'completed';
+};
+
+export type Client = {
+  id: string;
+  name: string;
+  time?: string;
 };
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -33,15 +41,19 @@ const MONTHS_SHORT = [
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ];
 
-export function programIdFromDate(date: Date): string {
+export function isoDate(date: Date): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
 }
 
-export function todayProgramId(): string {
-  return programIdFromDate(new Date());
+export function todayIso(): string {
+  return isoDate(new Date());
+}
+
+export function programIdFor(clientId: string, dateIso: string): string {
+  return `${dateIso}-${clientId}`;
 }
 
 export function formatDateLong(date: Date): string {
@@ -59,15 +71,19 @@ function dayOffset(days: number): Date {
 }
 
 function makeProgram(
+  clientId: string,
   offsetDays: number,
   status: Program['status'],
   lifts: Lift[],
 ): Program {
   const date = dayOffset(offsetDays);
+  const iso = isoDate(date);
   return {
-    id: programIdFromDate(date),
+    id: programIdFor(clientId, iso),
+    clientId,
     date: formatDateLong(date),
     dateShort: formatDateShort(date),
+    dateIso: iso,
     status,
     lifts,
   };
@@ -156,73 +172,112 @@ function withClonedId(lift: Lift): Lift {
   return cloned;
 }
 
-export function seedPrograms(): Program[] {
+export function seedClients(): Client[] {
   return [
-    // Two days ago — completed session, fully logged with one strikethrough
-    makeProgram(-2, 'completed', [
+    { id: 'nic', name: 'Nic', time: '6:00 am' },
+    { id: 'sarah', name: 'Sarah', time: '6:00 am' },
+    { id: 'marcus', name: 'Marcus', time: '6:45 am' },
+    { id: 'jen', name: 'Jen', time: '6:45 am' },
+    { id: 'david', name: 'David', time: '7:30 am' },
+    { id: 'pat', name: 'Pat', time: '9:00 am' },
+  ];
+}
+
+export function seedPrograms(): Program[] {
+  const programs: Program[] = [];
+
+  // Nic — full history, in-progress today
+  programs.push(
+    makeProgram('nic', -2, 'completed', [
       withAllCompleted(PRESS_5x7),
       withAllCompleted(SQUAT_5x10),
       withAllCompleted(DL_4x5, [{}, {}, { actualReps: 4 }, {}]),
       withAllCompleted(PULLDOWN_3x12),
       withAllCompleted(PLANK_5x20s),
     ]),
-    // Yesterday — completed session
-    makeProgram(-1, 'completed', [
+    makeProgram('nic', -1, 'completed', [
       withAllCompleted(PRESS_5x7, [{}, {}, {}, { actualReps: 6 }, { actualReps: 5 }]),
       withAllCompleted(SQUAT_5x10),
       withAllCompleted(DL_4x5),
     ]),
-    // Today — published, in progress
-    {
-      id: todayProgramId(),
-      date: formatDateLong(new Date()),
-      dateShort: formatDateShort(new Date()),
-      status: 'published',
-      lifts: [
-        {
-          ...clone(PRESS_5x7),
-          sets: [
-            { prescribedReps: 7, completed: true },
-            { prescribedReps: 7, completed: true },
-            { prescribedReps: 7, completed: false },
-            { prescribedReps: 7, completed: false },
-            { prescribedReps: 7, completed: false },
-          ],
-        },
-        {
-          ...clone(SQUAT_5x10),
-          sets: [
-            { prescribedReps: 10, completed: true },
-            { prescribedReps: 10, completed: true },
-            { prescribedReps: 10, completed: false },
-            { prescribedReps: 10, completed: false },
-            { prescribedReps: 10, completed: false },
-          ],
-        },
-        {
-          ...clone(DL_4x5),
-          sets: [
-            { prescribedReps: 5, completed: true },
-            { prescribedReps: 5, completed: false },
-            { prescribedReps: 5, actualReps: 4, completed: false },
-            { prescribedReps: 5, completed: false },
-          ],
-        },
-        clone(PULLDOWN_3x12),
-        clone(PLANK_5x20s),
-      ],
-    },
-    // Tomorrow — published, untouched
-    makeProgram(1, 'published', [
+    makeProgram('nic', 0, 'published', [
+      {
+        ...clone(PRESS_5x7),
+        sets: [
+          { prescribedReps: 7, completed: true },
+          { prescribedReps: 7, completed: true },
+          { prescribedReps: 7, completed: false },
+          { prescribedReps: 7, completed: false },
+          { prescribedReps: 7, completed: false },
+        ],
+      },
+      {
+        ...clone(SQUAT_5x10),
+        sets: [
+          { prescribedReps: 10, completed: true },
+          { prescribedReps: 10, completed: true },
+          { prescribedReps: 10, completed: false },
+          { prescribedReps: 10, completed: false },
+          { prescribedReps: 10, completed: false },
+        ],
+      },
+      {
+        ...clone(DL_4x5),
+        sets: [
+          { prescribedReps: 5, completed: true },
+          { prescribedReps: 5, completed: false },
+          { prescribedReps: 5, actualReps: 4, completed: false },
+          { prescribedReps: 5, completed: false },
+        ],
+      },
+      clone(PULLDOWN_3x12),
+      clone(PLANK_5x20s),
+    ]),
+    makeProgram('nic', 1, 'published', [
       withClonedId(PRESS_5x7),
       withClonedId(SQUAT_5x10),
       withClonedId(DL_4x5),
       withClonedId(PULLDOWN_3x12),
     ]),
-    // Day after tomorrow — draft (trainer hasn't published yet)
-    makeProgram(2, 'draft', [
+    makeProgram('nic', 2, 'draft', [withClonedId(PRESS_5x7), withClonedId(SQUAT_5x10)]),
+  );
+
+  // Sarah — published today
+  programs.push(
+    makeProgram('sarah', 0, 'published', [
       withClonedId(PRESS_5x7),
       withClonedId(SQUAT_5x10),
+      withClonedId(PULLDOWN_3x12),
     ]),
-  ];
+  );
+
+  // Marcus — draft today
+  programs.push(
+    makeProgram('marcus', 0, 'draft', [
+      withClonedId(SQUAT_5x10),
+      withClonedId(DL_4x5),
+      withClonedId(PLANK_5x20s),
+    ]),
+  );
+
+  // Jen — completed today (early bird)
+  programs.push(
+    makeProgram('jen', 0, 'completed', [
+      withAllCompleted(PRESS_5x7),
+      withAllCompleted(PULLDOWN_3x12),
+    ]),
+  );
+
+  // David — draft today
+  programs.push(
+    makeProgram('david', 0, 'draft', [
+      withClonedId(SQUAT_5x10),
+      withClonedId(DL_4x5),
+    ]),
+  );
+
+  // Pat — no program today (trainer adds during session)
+  // Intentionally omitted from programs[]; surfaces as NO PROGRAM in roster
+
+  return programs;
 }
