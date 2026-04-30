@@ -15,6 +15,8 @@ type Props = {
   onPressWeight?: (liftId: string) => void;
   onLongPress?: (liftId: string) => void;
   activeTarget?: EditTarget | null;
+  hideCircles?: boolean;
+  readOnly?: boolean;
 };
 
 export function LiftRow({
@@ -24,6 +26,8 @@ export function LiftRow({
   onPressWeight,
   onLongPress,
   activeTarget,
+  hideCircles,
+  readOnly,
 }: Props) {
   const weightActive =
     activeTarget?.kind === 'weight' && activeTarget.liftId === lift.id;
@@ -32,14 +36,17 @@ export function LiftRow({
 
   return (
     <Pressable
-      onLongPress={onLongPress ? () => onLongPress(lift.id) : undefined}
+      onLongPress={onLongPress && !readOnly ? () => onLongPress(lift.id) : undefined}
       delayLongPress={400}
       style={styles.lift}
     >
       <View style={styles.headerRow}>
         <Text style={styles.name}>{lift.name}</Text>
         {headerLabel ? (
-          <Pressable onPress={() => onPressWeight?.(lift.id)} hitSlop={8}>
+          <Pressable
+            onPress={readOnly ? undefined : () => onPressWeight?.(lift.id)}
+            hitSlop={8}
+          >
             <Text style={[styles.weight, weightActive && styles.activeText]}>
               {headerLabel}
             </Text>
@@ -57,6 +64,8 @@ export function LiftRow({
               key={idx}
               set={set}
               active={isActive}
+              hideCircle={hideCircles}
+              readOnly={readOnly}
               onToggle={next => onToggleSet?.(lift.id, idx, next)}
               onPressReps={() => onPressReps?.(lift.id, idx)}
             />
@@ -87,11 +96,15 @@ function formatCompactHeader(weight: string | undefined, sets: SetEntry[]) {
 function SetCell({
   set,
   active,
+  hideCircle,
+  readOnly,
   onToggle,
   onPressReps,
 }: {
   set: SetEntry;
   active?: boolean;
+  hideCircle?: boolean;
+  readOnly?: boolean;
   onToggle?: (next: boolean) => void;
   onPressReps?: () => void;
 }) {
@@ -101,8 +114,14 @@ function SetCell({
 
   return (
     <View style={styles.set}>
-      <TallyCheck checked={set.completed} onToggle={onToggle} />
-      <Pressable onPress={onPressReps} hitSlop={8}>
+      {hideCircle ? null : (
+        <TallyCheck
+          checked={set.completed}
+          onToggle={readOnly ? undefined : onToggle}
+          disabled={readOnly}
+        />
+      )}
+      <Pressable onPress={readOnly ? undefined : onPressReps} hitSlop={8}>
         {showStrike ? (
           <PencilStrikethrough
             prescribed={`${set.prescribedReps}${unitSuffix}`}

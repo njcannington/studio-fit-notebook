@@ -198,6 +198,8 @@ function ProgramView({
             onPressReps={onPressReps}
             onPressWeight={onPressWeight}
             onLongPress={onLongPressLift}
+            hideCircles={isAdmin}
+            readOnly={isCompleted}
           />
         ))}
         {allComplete && !isCompleted ? (
