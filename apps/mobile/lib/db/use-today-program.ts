@@ -3,6 +3,7 @@ import {
   loadTodayProgram,
   seedTodayProgramIfEmpty,
   setLiftDefaultWeight,
+  setProgramStatus,
   setSetActualReps,
   setSetCompleted,
 } from './programs';
@@ -72,5 +73,10 @@ export function useTodayProgram() {
     );
   };
 
-  return { program, toggleSet, updateActualReps, updateLiftWeight };
+  const updateStatus = (status: 'draft' | 'published' | 'completed') => {
+    setProgramStatus(status);
+    setProgram(current => (current ? { ...current, status } : current));
+  };
+
+  return { program, toggleSet, updateActualReps, updateLiftWeight, updateStatus };
 }

@@ -136,3 +136,8 @@ export function setLiftDefaultWeight(liftId: string, weight: string) {
   const db = getDb();
   db.runSync('UPDATE lifts SET default_weight = ? WHERE id = ?', [weight, liftId]);
 }
+
+export function setProgramStatus(status: 'draft' | 'published' | 'completed') {
+  const db = getDb();
+  db.runSync('UPDATE programs SET status = ? WHERE id = ?', [status, TODAY_PROGRAM_ID]);
+}
