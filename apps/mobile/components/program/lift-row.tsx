@@ -32,7 +32,11 @@ export function LiftRow({
   const weightActive =
     activeTarget?.kind === 'weight' && activeTarget.liftId === lift.id;
 
-  const headerLabel = formatCompactHeader(lift.defaultWeight, lift.sets);
+  const homogeneous = isHomogeneous(lift.sets);
+  const headerLabel = homogeneous
+    ? formatCompactHeader(lift.defaultWeight, lift.sets)
+    : lift.defaultWeight;
+  const showSetCells = !(hideCircles && homogeneous);
 
   return (
     <Pressable
@@ -53,26 +57,36 @@ export function LiftRow({
           </Pressable>
         ) : null}
       </View>
-      <View style={styles.setsRow}>
-        {lift.sets.map((set, idx) => {
-          const isActive =
-            activeTarget?.kind === 'reps' &&
-            activeTarget.liftId === lift.id &&
-            activeTarget.setIndex === idx;
-          return (
-            <SetCell
-              key={idx}
-              set={set}
-              active={isActive}
-              hideCircle={hideCircles}
-              readOnly={readOnly}
-              onToggle={next => onToggleSet?.(lift.id, idx, next)}
-              onPressReps={() => onPressReps?.(lift.id, idx)}
-            />
-          );
-        })}
-      </View>
+      {showSetCells ? (
+        <View style={styles.setsRow}>
+          {lift.sets.map((set, idx) => {
+            const isActive =
+              activeTarget?.kind === 'reps' &&
+              activeTarget.liftId === lift.id &&
+              activeTarget.setIndex === idx;
+            return (
+              <SetCell
+                key={idx}
+                set={set}
+                active={isActive}
+                hideCircle={hideCircles}
+                readOnly={readOnly}
+                onToggle={next => onToggleSet?.(lift.id, idx, next)}
+                onPressReps={() => onPressReps?.(lift.id, idx)}
+              />
+            );
+          })}
+        </View>
+      ) : null}
     </Pressable>
+  );
+}
+
+function isHomogeneous(sets: SetEntry[]) {
+  if (sets.length === 0) return false;
+  const first = sets[0];
+  return sets.every(
+    s => s.prescribedReps === first.prescribedReps && s.unit === first.unit,
   );
 }
 
