@@ -31,4 +31,9 @@ CREATE TABLE IF NOT EXISTS sets (
 );
 
 CREATE INDEX IF NOT EXISTS idx_sets_lift_id ON sets(lift_id);
+
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
 `;

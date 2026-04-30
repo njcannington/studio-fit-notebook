@@ -1,7 +1,9 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fontFamilies, spacing } from '@studio-fit/design-tokens';
+import { useRole } from '@/lib/db/use-role';
 import { useTodayProgram } from '@/lib/db/use-today-program';
+import type { Role } from '@/lib/db/settings';
 
 const STATUSES: Array<'draft' | 'published' | 'completed'> = [
   'draft',
@@ -9,14 +11,36 @@ const STATUSES: Array<'draft' | 'published' | 'completed'> = [
   'completed',
 ];
 
+const ROLES: Role[] = ['client', 'admin'];
+
 export default function MeScreen() {
   const { program, updateStatus } = useTodayProgram();
+  const { role, updateRole } = useRole();
 
   return (
     <SafeAreaView style={styles.root} edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.headline}>Me</Text>
         <Text style={styles.body}>Profile and settings will live here.</Text>
+
+        <Text style={styles.sectionTitle}>Dev · Role</Text>
+        <Text style={styles.helper}>Current: {role}</Text>
+        <View style={styles.row}>
+          {ROLES.map(r => {
+            const active = role === r;
+            return (
+              <Pressable
+                key={r}
+                onPress={() => updateRole(r)}
+                style={[styles.button, active && styles.buttonActive]}
+              >
+                <Text style={[styles.buttonText, active && styles.buttonTextActive]}>
+                  {r}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
 
         <Text style={styles.sectionTitle}>Dev · Today's program status</Text>
         <Text style={styles.helper}>
