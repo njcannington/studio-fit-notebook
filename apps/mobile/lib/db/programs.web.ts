@@ -24,6 +24,21 @@ export function loadProgramsForClient(clientId: string): Program[] {
   );
 }
 
+export function loadPriorWeight(
+  clientId: string,
+  currentDateIso: string,
+  liftName: string,
+): string | null {
+  const programs = getStore()
+    .programs.filter(p => p.clientId === clientId && p.dateIso < currentDateIso)
+    .sort((a, b) => b.dateIso.localeCompare(a.dateIso));
+  for (const program of programs) {
+    const lift = program.lifts.find(l => l.name === liftName);
+    if (lift?.defaultWeight) return lift.defaultWeight;
+  }
+  return null;
+}
+
 export function seedAllIfEmpty(): { programs: Program[] } {
   // Seed runs eagerly inside getStore on web; this is just a no-op handle.
   return { programs: loadAllPrograms() };

@@ -109,6 +109,31 @@ export function loadProgramsForClient(clientId: string): Program[] {
   return rows.map(row => rowToProgram(db, row));
 }
 
+/**
+ * Most recent prescribed weight for a lift with this name, for this client,
+ * before currentDateIso. Used by the program-builder spec's "was X" annotation.
+ * Matches by lift name because lift IDs are unique per program in our seed.
+ */
+export function loadPriorWeight(
+  clientId: string,
+  currentDateIso: string,
+  liftName: string,
+): string | null {
+  const db = getDb();
+  const row = db.getFirstSync<{ default_weight: string | null }>(
+    `SELECT lifts.default_weight
+     FROM lifts
+     INNER JOIN programs ON lifts.program_id = programs.id
+     WHERE programs.client_id = ?
+       AND programs.date_iso < ?
+       AND lifts.name = ?
+     ORDER BY programs.date_iso DESC
+     LIMIT 1`,
+    [clientId, currentDateIso, liftName],
+  );
+  return row?.default_weight ?? null;
+}
+
 export function seedAllIfEmpty(): { programs: Program[] } {
   const db = getDb();
   const existing = db.getFirstSync<{ count: number }>(

@@ -24,6 +24,7 @@ type Props = {
   hideCircles?: boolean;
   readOnly?: boolean;
   isAdmin?: boolean;
+  priorWeight?: string;
 };
 
 export function LiftRow({
@@ -39,6 +40,7 @@ export function LiftRow({
   hideCircles,
   readOnly,
   isAdmin,
+  priorWeight,
 }: Props) {
   const weightActive =
     activeTarget?.kind === 'weight' && activeTarget.liftId === lift.id;
@@ -80,6 +82,9 @@ export function LiftRow({
             onPress={readOnly ? undefined : () => onPressWeight?.(lift.id)}
           />
         )}
+        {isAdmin && priorWeight ? (
+          <Text style={styles.priorWeight}>was {priorWeight}</Text>
+        ) : null}
       </View>
       {showSetCells ? (
         <View style={styles.setsRow}>
@@ -297,6 +302,12 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.pencil,
     fontSize: 20,
     color: colors.ink.pencilLight,
+  },
+  priorWeight: {
+    fontFamily: fontFamilies.pencil,
+    fontSize: 13,
+    fontStyle: 'italic',
+    color: colors.ink.pencilFaded,
   },
   setsRow: {
     flexDirection: 'row',

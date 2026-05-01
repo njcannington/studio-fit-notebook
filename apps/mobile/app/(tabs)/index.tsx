@@ -15,6 +15,7 @@ import { LiftRow, type EditTarget } from '@/components/program';
 import { RosterView } from '@/components/roster';
 import { useClientPrograms } from '@/lib/db/use-all-programs';
 import { useClients } from '@/lib/db/use-clients';
+import { usePriorWeights } from '@/lib/db/use-prior-weights';
 import { useRole } from '@/lib/db/use-role';
 import { useTodayRoster } from '@/lib/db/use-roster';
 import { useTodayProgram } from '@/lib/db/use-today-program';
@@ -60,6 +61,7 @@ export default function TodayScreen() {
   const allPrograms = useClientPrograms(DEFAULT_CLIENT_ID);
   const { rows: rosterRows, refresh: refreshRoster } = useTodayRoster();
   const { clients, setClientTime } = useClients();
+  const priorWeights = usePriorWeights(program);
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
   const [actionLiftId, setActionLiftId] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -199,6 +201,7 @@ export default function TodayScreen() {
           program={program}
           editTarget={editTarget}
           isAdmin={isAdmin}
+          priorWeights={priorWeights}
           onToggleSet={toggleSet}
           onPressReps={(liftId, setIndex) =>
             setEditTarget({ kind: 'reps', liftId, setIndex })
@@ -270,6 +273,7 @@ type ProgramViewProps = {
   program: Program;
   editTarget: EditTarget | null;
   isAdmin: boolean;
+  priorWeights: Map<string, string>;
   onToggleSet: (liftId: string, setIndex: number, next: boolean) => void;
   onPressReps: (liftId: string, setIndex: number) => void;
   onPressWeight: (liftId: string) => void;
@@ -286,6 +290,7 @@ function ProgramView({
   program,
   editTarget,
   isAdmin,
+  priorWeights,
   onToggleSet,
   onPressReps,
   onPressWeight,
@@ -319,6 +324,7 @@ function ProgramView({
             hideCircles={isAdmin}
             readOnly={isCompleted}
             isAdmin={isAdmin}
+            priorWeight={priorWeights.get(lift.id)}
           />
         ))}
         {allComplete && !isCompleted ? (

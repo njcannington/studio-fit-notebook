@@ -173,6 +173,10 @@ function withClonedId(lift: Lift): Lift {
   return cloned;
 }
 
+function withWeight(lift: Lift, defaultWeight: string): Lift {
+  return { ...lift, defaultWeight };
+}
+
 export function seedClients(): Client[] {
   return [
     // Today's roster — these have programs (or "no program" rows)
@@ -218,19 +222,24 @@ export function seedClients(): Client[] {
 export function seedPrograms(): Program[] {
   const programs: Program[] = [];
 
-  // Nic — full history, in-progress today
+  // Nic — full history, in-progress today.
+  // Prior sessions intentionally use lower weights so today's program shows
+  // "was X" annotations for the trainer's progressive-overload bump.
   programs.push(
     makeProgram('nic', -2, 'completed', [
-      withAllCompleted(PRESS_5x7),
+      withWeight(withAllCompleted(PRESS_5x7), '30 lb'),
       withAllCompleted(SQUAT_5x10),
-      withAllCompleted(DL_4x5, [{}, {}, { actualReps: 4 }, {}]),
-      withAllCompleted(PULLDOWN_3x12),
+      withWeight(withAllCompleted(DL_4x5, [{}, {}, { actualReps: 4 }, {}]), '80 lb'),
+      withWeight(withAllCompleted(PULLDOWN_3x12), '55 lb'),
       withAllCompleted(PLANK_5x20s),
     ]),
     makeProgram('nic', -1, 'completed', [
-      withAllCompleted(PRESS_5x7, [{}, {}, {}, { actualReps: 6 }, { actualReps: 5 }]),
+      withWeight(
+        withAllCompleted(PRESS_5x7, [{}, {}, {}, { actualReps: 6 }, { actualReps: 5 }]),
+        '30 lb',
+      ),
       withAllCompleted(SQUAT_5x10),
-      withAllCompleted(DL_4x5),
+      withWeight(withAllCompleted(DL_4x5), '80 lb'),
     ]),
     makeProgram('nic', 0, 'published', [
       {
