@@ -21,25 +21,14 @@ const STATUS_COLORS: Record<StatusKey, { bg: string; fg: string }> = {
 type Props = {
   rows: RosterRow[];
   onPressClient: (rosterRow: RosterRow) => void;
-  onPublishAll?: () => void;
   onPressAddClient?: () => void;
 };
 
-export function RosterView({ rows, onPressClient, onPublishAll, onPressAddClient }: Props) {
-  const draftCount = rows.filter(r => r.program?.status === 'draft').length;
-  const allPublished = rows.length > 0 && draftCount === 0;
-
+export function RosterView({ rows, onPressClient, onPressAddClient }: Props) {
   return (
     <ScrollView contentContainerStyle={styles.content}>
       <View style={styles.headerRow}>
         <Text style={styles.sectionLabel}>Today</Text>
-        {onPublishAll && draftCount > 0 ? (
-          <Pressable onPress={onPublishAll} hitSlop={8} style={styles.publishAll}>
-            <Text style={styles.publishAllText}>Publish all</Text>
-          </Pressable>
-        ) : allPublished ? (
-          <Text style={styles.allPublished}>All published</Text>
-        ) : null}
       </View>
 
       <View style={styles.list}>
@@ -109,27 +98,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
     textTransform: 'uppercase',
     color: colors.ink.pencilFaded,
-  },
-  publishAll: {
-    backgroundColor: colors.rust.base,
-    paddingHorizontal: spacing[3],
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  publishAllText: {
-    fontFamily: fontFamilies.block,
-    fontSize: 12,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: colors.paper.cream,
-    fontWeight: '600',
-  },
-  allPublished: {
-    fontFamily: fontFamilies.block,
-    fontSize: 11,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: colors.ink.pencilLight,
   },
   list: {
     backgroundColor: colors.iron.base,

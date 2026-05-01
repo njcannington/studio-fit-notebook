@@ -15,12 +15,7 @@ This is the queue. Build top-to-bottom. Each item names a target user behavior, 
 
 ## MVP queue — required to demo a viable product to the trainer
 
-These are the items left from the spec build orders ([`logging-screen.md` §11](specs/logging-screen.md), [`program-builder.md` §13](specs/program-builder.md)) that the demo needs to feel like a real app rather than a partial prototype.
-
-### 1. Publish All
-- **Why:** spec-listed and the button is already on screen. Trivial to wire.
-- **Spec:** [`program-builder.md` §3.1](specs/program-builder.md).
-- **Done when:** the button publishes every draft on today's roster in one action; replaced by `All published` label when none remain.
+(Empty. The four MVP-queue items have shipped. Anything else surfacing should land in [`notes.md`](notes.md) first; promoted here only with clear trainer signal.)
 
 ---
 

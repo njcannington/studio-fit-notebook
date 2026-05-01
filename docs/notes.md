@@ -52,6 +52,7 @@ Explicitly out of scope for the "demo to the trainer / would you pay for this" m
 - **Live-update for trainer-edited published programs** ([logging-screen.md §4.6](specs/logging-screen.md)).
 - **Lift picker autocomplete ranking** ([program-builder.md §14.3](specs/program-builder.md)).
 - **Recurring-attendance suggestions when adding clients** ([program-builder.md §14.2](specs/program-builder.md)).
+- **Publish All** ([program-builder.md §3.1](specs/program-builder.md)). Cut 2026-05-01: trainer wants to evaluate each program individually rather than rubber-stamp the day's drafts in one action. The bulk shortcut would train the wrong habit. Roster header no longer shows the affordance.
 - **Bulk operations** beyond Publish All ([program-builder.md §14.5](specs/program-builder.md)).
 - **Web-build feature parity** — current web build is a static demo with no persistence; no plan to make it a primary surface.
 
