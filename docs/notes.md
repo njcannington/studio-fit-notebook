@@ -14,6 +14,17 @@ Verbatim or close-paraphrase, dated, source noted.
 ### 2026-04-30 — first round of pilot link review
 - **Per-set notes.** Clients need a way to explain a deviation. Example: "didn't get all 5 because I pulled a muscle." Source: text-message feedback after the trainer reviewed [the live link](https://njcannington.github.io/studio-fit-notebook/). **→ Promoted to build queue (item 1).**
 
+### 2026-05-01 — second round
+- **Publish All cut.** Trainer wants to evaluate each program individually rather than rubber-stamp the day's drafts in one action. → Moved from build queue to "Cut for MVP" below.
+
+---
+
+## In-flight conversations (not yet decided)
+
+Picked up in mid-session and worth resuming:
+
+- **Acceptance criteria doc.** Nic asked for written acceptance criteria for the MVP — testable Given/When/Then scenarios so suggested edits can be measured against scope. Sketched approach: derive from the PRD's stated goals (north star) plus the spec build orders we shipped against (testable scenarios). Two scopes — "tight MVP" (6-8 must-hit scenarios) and "demo-ready" (15-ish, includes polish we already shipped). Not yet drafted; pending Nic's nod on the structure. Lands at `docs/acceptance-criteria.md`.
+
 ---
 
 ## 2. Open questions surfaced during the build
