@@ -1,0 +1,71 @@
+# Build Order
+
+**Status:** living queue
+**Purpose:** the next thing to build comes from this file, not from a fresh "where to next?" brainstorm. New ideas go in [`notes.md`](notes.md), not here.
+
+This is the queue. Build top-to-bottom. Each item names a target user behavior, points to the spec section it satisfies, and lists what "done" means.
+
+---
+
+## In progress / next up
+
+(Nothing currently committed to mid-flight. The next item below is the next thing to start.)
+
+---
+
+## MVP queue — required to demo a viable product to the trainer
+
+These are the items left from the spec build orders ([`logging-screen.md` §11](specs/logging-screen.md), [`program-builder.md` §13](specs/program-builder.md)) that the demo needs to feel like a real app rather than a partial prototype.
+
+### 1. Per-set notes
+- **Why:** trainer's first piece of pilot feedback ("clients need a way to explain a missed rep").
+- **Spec:** [`logging-screen.md` §3.3](specs/logging-screen.md), [`program-builder.md` §4.3](specs/program-builder.md).
+- **Done when:** a set with a deviation (actual ≠ prescribed) shows a `+ note` affordance; tapping it opens a small text input; the saved note renders as italic pencil text below the set; admin sees notes read-only on completed sessions.
+
+### 2. "Was X" annotations
+- **Why:** admin needs prior-session context while drafting today's program. Without it, the trainer can't make informed publish decisions.
+- **Spec:** [`program-builder.md` §4.2](specs/program-builder.md).
+- **Done when:** in admin mode, each lift's header gains a small `was 30` annotation in `pencil-sm`/`ink-pencil-faded` showing the prior session's prescribed weight for that lift on that template.
+
+### 3. Add lift to a program (lift picker)
+- **Why:** admin can add and remove sets, but can't add new lifts to a program. Authoring is incomplete without this.
+- **Spec:** [`program-builder.md` §4.2](specs/program-builder.md).
+- **Done when:** an `+ Add lift` button at the bottom of the program in admin mode opens a searchable picker (autocomplete from the canonical lift list); selecting one appends it with sensible defaults (e.g., 3×10 at a placeholder weight).
+
+### 4. New-program-from-scratch flow
+- **Why:** clients without a program (Pat, walk-ins) can't be authored today. Admin tapping a `NO PROGRAM` row goes nowhere.
+- **Spec:** [`program-builder.md` §7](specs/program-builder.md).
+- **Done when:** tapping a no-program row presents three starting points (empty / new-client template / copy from another client); selecting one creates a draft program and opens the editor.
+
+### 5. Publish All
+- **Why:** spec-listed and the button is already on screen. Trivial to wire.
+- **Spec:** [`program-builder.md` §3.1](specs/program-builder.md).
+- **Done when:** the button publishes every draft on today's roster in one action; replaced by `All published` label when none remain.
+
+---
+
+## After MVP — only with explicit user demand
+
+These are valuable but not on the critical path. Build only after the trainer (or pilot data) asks for them.
+
+- **Backend + sync** ([logging §3.5](specs/logging-screen.md), [program-builder §10](specs/program-builder.md)) — local-first works for the demo. AWS path discussed in conversation; defer until multi-device pilot.
+- **Templates manager** ([program-builder §6](specs/program-builder.md)) — explicitly low-priority in the spec.
+- **Ramp day builder** ([program-builder §5](specs/program-builder.md)) — specialized, low frequency.
+- **Long-press on a roster row** (remove from today, etc.) — only useful at scale.
+- **Live-update toast when admin edits a published program** ([logging §4.6](specs/logging-screen.md)) — needs sync.
+- **iPad landscape split view** ([program-builder §8.2](specs/program-builder.md)) — biggest layout change, last per spec.
+- **Multi-day calendar / past-date jumping for admin** — current History tab covers this loosely.
+- **Needs-attention dashboard** ([dedicated spec](specs/needs-attention-dashboard.md)) — separate surface, separate effort.
+- **Autofill engine** ([logging §11.5](specs/logging-screen.md), [program-builder §1](specs/program-builder.md)) — large; PRD's eventual differentiator but not the MVP.
+- **Authentication / multi-user** — deferred. Single trainer, dev role toggle covers the demo.
+
+---
+
+## How to use this file
+
+When proposing the next chunk of work:
+1. Pick the top in-progress item or the top MVP-queue item.
+2. If a different surface tempts, check whether its corresponding spec section is in this file. If not, the work goes in [`notes.md`](notes.md), not here.
+3. After a chunk is shipped, move it to a "Done" section at the bottom (or remove it — whichever is cleaner). Update what's "in progress."
+
+Open questions, trainer feedback, and ideas-we-might-want-later live in [`notes.md`](notes.md). This file is only for things we've decided to build, in the order we'll build them.
