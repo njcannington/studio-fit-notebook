@@ -17,30 +17,31 @@ This is the queue. Build top-to-bottom. Each item names a target user behavior, 
 
 These are the items left from the spec build orders ([`logging-screen.md` §11](specs/logging-screen.md), [`program-builder.md` §13](specs/program-builder.md)) that the demo needs to feel like a real app rather than a partial prototype.
 
-### 1. Per-set notes
-- **Why:** trainer's first piece of pilot feedback ("clients need a way to explain a missed rep").
-- **Spec:** [`logging-screen.md` §3.3](specs/logging-screen.md), [`program-builder.md` §4.3](specs/program-builder.md).
-- **Done when:** a set with a deviation (actual ≠ prescribed) shows a `+ note` affordance; tapping it opens a small text input; the saved note renders as italic pencil text below the set; admin sees notes read-only on completed sessions.
-
-### 2. "Was X" annotations
+### 1. "Was X" annotations
 - **Why:** admin needs prior-session context while drafting today's program. Without it, the trainer can't make informed publish decisions.
 - **Spec:** [`program-builder.md` §4.2](specs/program-builder.md).
 - **Done when:** in admin mode, each lift's header gains a small `was 30` annotation in `pencil-sm`/`ink-pencil-faded` showing the prior session's prescribed weight for that lift on that template.
 
-### 3. Add lift to a program (lift picker)
+### 2. Add lift to a program (lift picker)
 - **Why:** admin can add and remove sets, but can't add new lifts to a program. Authoring is incomplete without this.
 - **Spec:** [`program-builder.md` §4.2](specs/program-builder.md).
 - **Done when:** an `+ Add lift` button at the bottom of the program in admin mode opens a searchable picker (autocomplete from the canonical lift list); selecting one appends it with sensible defaults (e.g., 3×10 at a placeholder weight).
 
-### 4. New-program-from-scratch flow
+### 3. New-program-from-scratch flow
 - **Why:** clients without a program (Pat, walk-ins) can't be authored today. Admin tapping a `NO PROGRAM` row goes nowhere.
 - **Spec:** [`program-builder.md` §7](specs/program-builder.md).
 - **Done when:** tapping a no-program row presents three starting points (empty / new-client template / copy from another client); selecting one creates a draft program and opens the editor.
 
-### 5. Publish All
+### 4. Publish All
 - **Why:** spec-listed and the button is already on screen. Trivial to wire.
 - **Spec:** [`program-builder.md` §3.1](specs/program-builder.md).
 - **Done when:** the button publishes every draft on today's roster in one action; replaced by `All published` label when none remain.
+
+---
+
+## Done
+
+- **Per-set notes** ([578cb7b](https://github.com/njcannington/studio-fit-notebook/commit/578cb7b)). Trainer's first piece of pilot feedback. `+ note` chip on deviating sets opens a sheet input; saved notes render inline as italic pencil text. Admin and completed sessions are read-only.
 
 ---
 
