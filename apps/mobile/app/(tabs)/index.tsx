@@ -10,6 +10,7 @@ import { WavyDivider } from '@/components/divider';
 import { ChevronLeftIcon, PencilIcon } from '@/components/icons';
 import { NumberPad } from '@/components/number-pad';
 import { PaperCard } from '@/components/paper-card';
+import { NoteSheet } from '@/components/note-sheet';
 import { LiftRow, type EditTarget } from '@/components/program';
 import { RosterView } from '@/components/roster';
 import { useClientPrograms } from '@/lib/db/use-all-programs';
@@ -54,6 +55,7 @@ export default function TodayScreen() {
     updateLiftPrescribedReps,
     updateSetPrescribedReps,
     updateLiftSetCount,
+    updateSetNote,
   } = useTodayProgram(viewedProgramId ?? undefined);
   const allPrograms = useClientPrograms(DEFAULT_CLIENT_ID);
   const { rows: rosterRows, refresh: refreshRoster } = useTodayRoster();
@@ -62,6 +64,20 @@ export default function TodayScreen() {
   const [actionLiftId, setActionLiftId] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [clientPickerOpen, setClientPickerOpen] = useState(false);
+  const [noteTarget, setNoteTarget] = useState<{ liftId: string; setIndex: number } | null>(null);
+
+  const noteInitialValue = useMemo(() => {
+    if (!noteTarget || !program) return '';
+    const lift = program.lifts.find(l => l.id === noteTarget.liftId);
+    return lift?.sets[noteTarget.setIndex]?.note ?? '';
+  }, [noteTarget, program]);
+
+  const commitNote = (value: string) => {
+    if (!noteTarget) return;
+    const trimmed = value.trim();
+    updateSetNote(noteTarget.liftId, noteTarget.setIndex, trimmed.length === 0 ? null : trimmed);
+    setNoteTarget(null);
+  };
 
   const handleAction = (id: string) => {
     if (!actionLiftId) return;
@@ -190,6 +206,7 @@ export default function TodayScreen() {
           onPressWeight={liftId => setEditTarget({ kind: 'weight', liftId })}
           onPressLiftReps={liftId => setEditTarget({ kind: 'lift-reps', liftId })}
           onPressSetCount={liftId => setEditTarget({ kind: 'set-count', liftId })}
+          onPressNote={(liftId, setIndex) => setNoteTarget({ liftId, setIndex })}
           onComplete={() => updateStatus('completed')}
           onLongPressLift={isAdmin ? liftId => setActionLiftId(liftId) : undefined}
           onPublish={() => updateStatus('published')}
@@ -236,6 +253,15 @@ export default function TodayScreen() {
         onCancel={() => setEditTarget(null)}
         onCommit={commit}
       />
+
+      <NoteSheet
+        visible={noteTarget !== null}
+        initialValue={noteInitialValue}
+        title="Note for this set"
+        placeholder="What happened on this set?"
+        onCommit={commitNote}
+        onCancel={() => setNoteTarget(null)}
+      />
     </SafeAreaView>
   );
 }
@@ -249,6 +275,7 @@ type ProgramViewProps = {
   onPressWeight: (liftId: string) => void;
   onPressLiftReps: (liftId: string) => void;
   onPressSetCount: (liftId: string) => void;
+  onPressNote: (liftId: string, setIndex: number) => void;
   onComplete: () => void;
   onLongPressLift?: (liftId: string) => void;
   onPublish: () => void;
@@ -264,6 +291,7 @@ function ProgramView({
   onPressWeight,
   onPressLiftReps,
   onPressSetCount,
+  onPressNote,
   onComplete,
   onLongPressLift,
   onPublish,
@@ -286,6 +314,7 @@ function ProgramView({
             onPressWeight={onPressWeight}
             onPressLiftReps={onPressLiftReps}
             onPressSetCount={onPressSetCount}
+            onPressNote={onPressNote}
             onLongPress={onLongPressLift}
             hideCircles={isAdmin}
             readOnly={isCompleted}

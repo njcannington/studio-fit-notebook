@@ -41,6 +41,12 @@ export function setSetActualReps(liftId: string, setIndex: number, actualReps: n
   });
 }
 
+export function setSetNote(liftId: string, setIndex: number, note: string | null) {
+  mutateSet(liftId, setIndex, set => {
+    set.note = note ?? undefined;
+  });
+}
+
 export function setLiftPrescribedReps(liftId: string, prescribedReps: number) {
   mutateLift(liftId, lift => {
     lift.sets = lift.sets.map(s => ({ ...s, prescribedReps }));

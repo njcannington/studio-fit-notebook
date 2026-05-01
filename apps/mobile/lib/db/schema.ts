@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 export const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS clients (
@@ -38,7 +38,8 @@ CREATE TABLE IF NOT EXISTS sets (
   prescribed_weight TEXT,
   actual_weight TEXT,
   unit TEXT,
-  completed INTEGER NOT NULL DEFAULT 0
+  completed INTEGER NOT NULL DEFAULT 0,
+  note TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_sets_lift_id ON sets(lift_id);

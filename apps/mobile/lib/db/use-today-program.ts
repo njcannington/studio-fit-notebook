@@ -12,6 +12,7 @@ import {
   setProgramStatus,
   setSetActualReps,
   setSetCompleted,
+  setSetNote,
   setSetPrescribedReps,
 } from './programs';
 import { programIdFor, todayIso, type Program } from '@/lib/mock-data/today-program';
@@ -127,6 +128,27 @@ export function useTodayProgram(programIdOverride?: string) {
     reload();
   };
 
+  const updateSetNote = (liftId: string, setIndex: number, note: string | null) => {
+    setSetNote(liftId, setIndex, note);
+    setProgram(current =>
+      current
+        ? {
+            ...current,
+            lifts: current.lifts.map(lift =>
+              lift.id === liftId
+                ? {
+                    ...lift,
+                    sets: lift.sets.map((set, idx) =>
+                      idx === setIndex ? { ...set, note: note ?? undefined } : set,
+                    ),
+                  }
+                : lift,
+            ),
+          }
+        : current,
+    );
+  };
+
   return {
     program,
     toggleSet,
@@ -139,5 +161,6 @@ export function useTodayProgram(programIdOverride?: string) {
     updateLiftPrescribedReps,
     updateSetPrescribedReps,
     updateLiftSetCount,
+    updateSetNote,
   };
 }

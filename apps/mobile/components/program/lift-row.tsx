@@ -8,7 +8,8 @@ export type EditTarget =
   | { kind: 'reps'; liftId: string; setIndex: number }
   | { kind: 'weight'; liftId: string }
   | { kind: 'lift-reps'; liftId: string }
-  | { kind: 'set-count'; liftId: string };
+  | { kind: 'set-count'; liftId: string }
+  | { kind: 'note'; liftId: string; setIndex: number };
 
 type Props = {
   lift: Lift;
@@ -17,6 +18,7 @@ type Props = {
   onPressWeight?: (liftId: string) => void;
   onPressLiftReps?: (liftId: string) => void;
   onPressSetCount?: (liftId: string) => void;
+  onPressNote?: (liftId: string, setIndex: number) => void;
   onLongPress?: (liftId: string) => void;
   activeTarget?: EditTarget | null;
   hideCircles?: boolean;
@@ -31,6 +33,7 @@ export function LiftRow({
   onPressWeight,
   onPressLiftReps,
   onPressSetCount,
+  onPressNote,
   onLongPress,
   activeTarget,
   hideCircles,
@@ -92,8 +95,10 @@ export function LiftRow({
                 active={isActive}
                 hideCircle={hideCircles}
                 readOnly={readOnly}
+                isAdmin={isAdmin}
                 onToggle={next => onToggleSet?.(lift.id, idx, next)}
                 onPressReps={() => onPressReps?.(lift.id, idx)}
+                onPressNote={() => onPressNote?.(lift.id, idx)}
               />
             );
           })}
@@ -199,43 +204,66 @@ function SetCell({
   active,
   hideCircle,
   readOnly,
+  isAdmin,
   onToggle,
   onPressReps,
+  onPressNote,
 }: {
   set: SetEntry;
   active?: boolean;
   hideCircle?: boolean;
   readOnly?: boolean;
+  isAdmin?: boolean;
   onToggle?: (next: boolean) => void;
   onPressReps?: () => void;
+  onPressNote?: () => void;
 }) {
   const showStrike = set.actualReps !== undefined && set.actualReps !== set.prescribedReps;
   const unitSuffix = set.unit === 'sec' ? ' sec' : '';
   const displayValue = set.actualReps ?? set.prescribedReps;
+  const hasNote = !!set.note && set.note.length > 0;
+  const canEditNote = !readOnly && !isAdmin;
+  const showNoteChip = canEditNote && showStrike && !hasNote;
 
   return (
-    <View style={styles.set}>
-      {hideCircle ? null : (
-        <TallyCheck
-          checked={set.completed}
-          onToggle={readOnly ? undefined : onToggle}
-          disabled={readOnly}
-        />
-      )}
-      <Pressable onPress={readOnly ? undefined : onPressReps} hitSlop={8}>
-        {showStrike ? (
-          <PencilStrikethrough
-            prescribed={`${set.prescribedReps}${unitSuffix}`}
-            actual={`${set.actualReps}${unitSuffix}`}
-            fontSize={20}
+    <View style={styles.setCell}>
+      <View style={styles.set}>
+        {hideCircle ? null : (
+          <TallyCheck
+            checked={set.completed}
+            onToggle={readOnly ? undefined : onToggle}
+            disabled={readOnly}
           />
-        ) : (
-          <Text style={[styles.reps, active && styles.activeText]}>
-            {displayValue}
-            {unitSuffix}
-          </Text>
         )}
-      </Pressable>
+        <Pressable onPress={readOnly ? undefined : onPressReps} hitSlop={8}>
+          {showStrike ? (
+            <PencilStrikethrough
+              prescribed={`${set.prescribedReps}${unitSuffix}`}
+              actual={`${set.actualReps}${unitSuffix}`}
+              fontSize={20}
+            />
+          ) : (
+            <Text style={[styles.reps, active && styles.activeText]}>
+              {displayValue}
+              {unitSuffix}
+            </Text>
+          )}
+        </Pressable>
+        {showNoteChip ? (
+          <Pressable onPress={onPressNote} hitSlop={6} style={styles.noteChip}>
+            <Text style={styles.noteChipText}>+ note</Text>
+          </Pressable>
+        ) : null}
+      </View>
+      {hasNote ? (
+        <Pressable
+          onPress={canEditNote ? onPressNote : undefined}
+          disabled={!canEditNote}
+          hitSlop={4}
+        >
+          <Text style={styles.noteText}>{set.note}</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -276,6 +304,11 @@ const styles = StyleSheet.create({
     gap: spacing[3],
     rowGap: spacing[2],
   },
+  setCell: {
+    flexDirection: 'column',
+    gap: 2,
+    maxWidth: '100%',
+  },
   set: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -288,5 +321,28 @@ const styles = StyleSheet.create({
   },
   activeText: {
     color: colors.rust.base,
+  },
+  noteChip: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginLeft: 4,
+    borderRadius: 4,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.ink.pencilFaded,
+  },
+  noteChipText: {
+    fontFamily: fontFamilies.block,
+    fontSize: 9,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: colors.ink.pencilFaded,
+  },
+  noteText: {
+    fontFamily: fontFamilies.pencil,
+    fontSize: 13,
+    fontStyle: 'italic',
+    color: colors.ink.pencilLight,
+    paddingLeft: 4,
+    maxWidth: 200,
   },
 });

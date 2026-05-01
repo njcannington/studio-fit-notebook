@@ -29,6 +29,7 @@ type SetRow = {
   actual_weight: string | null;
   unit: string | null;
   completed: number;
+  note: string | null;
 };
 
 function rowToSet(s: SetRow): SetEntry {
@@ -39,6 +40,7 @@ function rowToSet(s: SetRow): SetEntry {
     actualWeight: s.actual_weight ?? undefined,
     unit: (s.unit as SetEntry['unit']) ?? undefined,
     completed: s.completed === 1,
+    note: s.note ?? undefined,
   };
 }
 
@@ -147,8 +149,8 @@ export function seedAllIfEmpty(): { programs: Program[] } {
         lift.sets.forEach((set, setIdx) => {
           db.runSync(
             `INSERT INTO sets (id, lift_id, sort_order, prescribed_reps, actual_reps,
-              prescribed_weight, actual_weight, unit, completed)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              prescribed_weight, actual_weight, unit, completed, note)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               `${lift.id}-${setIdx}`,
               lift.id,
@@ -159,6 +161,7 @@ export function seedAllIfEmpty(): { programs: Program[] } {
               set.actualWeight ?? null,
               set.unit ?? null,
               set.completed ? 1 : 0,
+              set.note ?? null,
             ],
           );
         });
@@ -221,8 +224,8 @@ export function setLiftSetCount(liftId: string, targetCount: number) {
       for (let i = currentCount; i < targetCount; i++) {
         db.runSync(
           `INSERT INTO sets (id, lift_id, sort_order, prescribed_reps, actual_reps,
-            prescribed_weight, actual_weight, unit, completed)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            prescribed_weight, actual_weight, unit, completed, note)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             `${liftId}-${i}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
             liftId,
@@ -233,6 +236,7 @@ export function setLiftSetCount(liftId: string, targetCount: number) {
             null,
             last?.unit ?? null,
             0,
+            null,
           ],
         );
       }
@@ -269,8 +273,8 @@ export function addSetToLift(liftId: string) {
   const id = `${liftId}-${sortOrder}-${Date.now()}`;
   db.runSync(
     `INSERT INTO sets (id, lift_id, sort_order, prescribed_reps, actual_reps,
-      prescribed_weight, actual_weight, unit, completed)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      prescribed_weight, actual_weight, unit, completed, note)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       liftId,
@@ -281,7 +285,16 @@ export function addSetToLift(liftId: string) {
       null,
       last?.unit ?? null,
       0,
+      null,
     ],
+  );
+}
+
+export function setSetNote(liftId: string, setIndex: number, note: string | null) {
+  const db = getDb();
+  db.runSync(
+    'UPDATE sets SET note = ? WHERE lift_id = ? AND sort_order = ?',
+    [note, liftId, setIndex],
   );
 }
 

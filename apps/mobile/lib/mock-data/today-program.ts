@@ -5,6 +5,7 @@ export type SetEntry = {
   actualWeight?: string;
   unit?: 'reps' | 'sec';
   completed: boolean;
+  note?: string;
 };
 
 export type Lift = {
