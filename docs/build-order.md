@@ -17,12 +17,7 @@ This is the queue. Build top-to-bottom. Each item names a target user behavior, 
 
 These are the items left from the spec build orders ([`logging-screen.md` §11](specs/logging-screen.md), [`program-builder.md` §13](specs/program-builder.md)) that the demo needs to feel like a real app rather than a partial prototype.
 
-### 1. New-program-from-scratch flow
-- **Why:** clients without a program (Pat, walk-ins) can't be authored today. Admin tapping a `NO PROGRAM` row goes nowhere.
-- **Spec:** [`program-builder.md` §7](specs/program-builder.md).
-- **Done when:** tapping a no-program row presents three starting points (empty / new-client template / copy from another client); selecting one creates a draft program and opens the editor.
-
-### 2. Publish All
+### 1. Publish All
 - **Why:** spec-listed and the button is already on screen. Trivial to wire.
 - **Spec:** [`program-builder.md` §3.1](specs/program-builder.md).
 - **Done when:** the button publishes every draft on today's roster in one action; replaced by `All published` label when none remain.
@@ -31,6 +26,7 @@ These are the items left from the spec build orders ([`logging-screen.md` §11](
 
 ## Done
 
+- **New-program-from-scratch flow** ([de43977](https://github.com/njcannington/studio-fit-notebook/commit/de43977)). Tapping a NO PROGRAM roster row opens an action sheet with two starting points — Empty program or Copy from another client. The new program opens immediately in the editor. "New Client template" deferred (no templates yet).
 - **Add lift to a program (lift picker)** ([cf75749](https://github.com/njcannington/studio-fit-notebook/commit/cf75749)). Admin gets a `+ Add lift` button inside the paper card in editor mode. Slide-up picker searches a canonical library; selection appends with template defaults.
 - **"Was X" annotations** ([439adf3](https://github.com/njcannington/studio-fit-notebook/commit/439adf3)). Admin sees prior-session prescribed weight as a faded italic annotation on each lift's header. Hidden when weight is unchanged or no prior exists.
 - **Per-set notes** ([578cb7b](https://github.com/njcannington/studio-fit-notebook/commit/578cb7b)). Trainer's first piece of pilot feedback. `+ note` chip on deviating sets opens a sheet input; saved notes render inline as italic pencil text. Admin and completed sessions are read-only.
