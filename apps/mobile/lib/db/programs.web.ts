@@ -127,6 +127,81 @@ export function removeLift(liftId: string) {
   found.program.lifts = found.program.lifts.filter(l => l.id !== liftId);
 }
 
+export function createEmptyProgram(args: {
+  clientId: string;
+  dateIso: string;
+  dateLong: string;
+  dateShort: string;
+}): string {
+  const programId = `${args.dateIso}-${args.clientId}`;
+  const store = getStore();
+  const existingIdx = store.programs.findIndex(p => p.id === programId);
+  const fresh: Program = {
+    id: programId,
+    clientId: args.clientId,
+    date: args.dateLong,
+    dateShort: args.dateShort,
+    dateIso: args.dateIso,
+    status: 'draft',
+    lifts: [],
+  };
+  if (existingIdx >= 0) {
+    store.programs[existingIdx] = fresh;
+  } else {
+    store.programs.push(fresh);
+  }
+  return programId;
+}
+
+export function copyProgramForClient(args: {
+  sourceProgramId: string;
+  targetClientId: string;
+  targetDateIso: string;
+  targetDateLong: string;
+  targetDateShort: string;
+}): string {
+  const source = findProgram(args.sourceProgramId);
+  const targetProgramId = `${args.targetDateIso}-${args.targetClientId}`;
+  if (!source) {
+    return createEmptyProgram({
+      clientId: args.targetClientId,
+      dateIso: args.targetDateIso,
+      dateLong: args.targetDateLong,
+      dateShort: args.targetDateShort,
+    });
+  }
+  const lifts = source.lifts.map((sourceLift, liftIdx) => {
+    const newLiftId = `${sourceLift.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now()}-${liftIdx}-${Math.random().toString(36).slice(2, 6)}`;
+    return {
+      id: newLiftId,
+      name: sourceLift.name,
+      defaultWeight: undefined,
+      sets: sourceLift.sets.map(set => ({
+        prescribedReps: set.prescribedReps,
+        completed: false,
+        unit: set.unit,
+      })),
+    };
+  });
+  const fresh: Program = {
+    id: targetProgramId,
+    clientId: args.targetClientId,
+    date: args.targetDateLong,
+    dateShort: args.targetDateShort,
+    dateIso: args.targetDateIso,
+    status: 'draft',
+    lifts,
+  };
+  const store = getStore();
+  const existingIdx = store.programs.findIndex(p => p.id === targetProgramId);
+  if (existingIdx >= 0) {
+    store.programs[existingIdx] = fresh;
+  } else {
+    store.programs.push(fresh);
+  }
+  return targetProgramId;
+}
+
 export function addLiftToProgram(
   programId: string,
   template: {

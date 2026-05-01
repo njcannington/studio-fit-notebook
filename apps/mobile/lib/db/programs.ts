@@ -389,3 +389,85 @@ function slugify(name: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
 }
+
+export function createEmptyProgram(args: {
+  clientId: string;
+  dateIso: string;
+  dateLong: string;
+  dateShort: string;
+}): string {
+  const db = getDb();
+  const programId = `${args.dateIso}-${args.clientId}`;
+  db.runSync(
+    `INSERT OR REPLACE INTO programs (id, client_id, date, date_short, date_iso, status)
+     VALUES (?, ?, ?, ?, ?, 'draft')`,
+    [programId, args.clientId, args.dateLong, args.dateShort, args.dateIso],
+  );
+  return programId;
+}
+
+/**
+ * Clone the source program's lift structure and set counts onto a new draft
+ * program for targetClientId on targetDateIso. Weights are nulled per spec
+ * §7 ("structure with weights stripped"). Reps and units carry over.
+ */
+export function copyProgramForClient(args: {
+  sourceProgramId: string;
+  targetClientId: string;
+  targetDateIso: string;
+  targetDateLong: string;
+  targetDateShort: string;
+}): string {
+  const db = getDb();
+  const targetProgramId = `${args.targetDateIso}-${args.targetClientId}`;
+  const liftRows = db.getAllSync<LiftRow>(
+    'SELECT * FROM lifts WHERE program_id = ? ORDER BY sort_order',
+    [args.sourceProgramId],
+  );
+
+  db.withTransactionSync(() => {
+    db.runSync(
+      `INSERT OR REPLACE INTO programs (id, client_id, date, date_short, date_iso, status)
+       VALUES (?, ?, ?, ?, ?, 'draft')`,
+      [
+        targetProgramId,
+        args.targetClientId,
+        args.targetDateLong,
+        args.targetDateShort,
+        args.targetDateIso,
+      ],
+    );
+    liftRows.forEach((sourceLift, liftIdx) => {
+      const newLiftId = `${slugify(sourceLift.name)}-${Date.now()}-${liftIdx}-${Math.random().toString(36).slice(2, 6)}`;
+      db.runSync(
+        'INSERT INTO lifts (id, program_id, name, default_weight, sort_order) VALUES (?, ?, ?, ?, ?)',
+        [newLiftId, targetProgramId, sourceLift.name, null, liftIdx],
+      );
+      const sourceSets = db.getAllSync<SetRow>(
+        'SELECT * FROM sets WHERE lift_id = ? ORDER BY sort_order',
+        [sourceLift.id],
+      );
+      sourceSets.forEach((sourceSet, setIdx) => {
+        db.runSync(
+          `INSERT INTO sets (id, lift_id, sort_order, prescribed_reps, actual_reps,
+            prescribed_weight, actual_weight, unit, completed, note)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            `${newLiftId}-${setIdx}`,
+            newLiftId,
+            setIdx,
+            sourceSet.prescribed_reps,
+            null,
+            null,
+            null,
+            sourceSet.unit,
+            0,
+            null,
+          ],
+        );
+      });
+    });
+  });
+
+  return targetProgramId;
+}

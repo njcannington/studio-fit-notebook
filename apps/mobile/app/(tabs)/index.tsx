@@ -19,9 +19,16 @@ import { useClients } from '@/lib/db/use-clients';
 import { usePriorWeights } from '@/lib/db/use-prior-weights';
 import { useRole } from '@/lib/db/use-role';
 import { useTodayRoster } from '@/lib/db/use-roster';
+import { copyProgramForClient, createEmptyProgram } from '@/lib/db/programs';
 import { useTodayProgram } from '@/lib/db/use-today-program';
 import { LIFT_LIBRARY } from '@/lib/mock-data/lifts';
-import { programIdFor, todayIso, type Program } from '@/lib/mock-data/today-program';
+import {
+  formatDateLong,
+  formatDateShort,
+  programIdFor,
+  todayIso,
+  type Program,
+} from '@/lib/mock-data/today-program';
 
 const DEFAULT_CLIENT_ID = 'nic';
 const todayProgramId = () => programIdFor(DEFAULT_CLIENT_ID, todayIso());
@@ -30,6 +37,11 @@ const LIFT_ACTIONS: ActionItem[] = [
   { id: 'add-set', label: 'Add set' },
   { id: 'remove-set', label: 'Remove set' },
   { id: 'remove-lift', label: 'Remove lift', destructive: true },
+];
+
+const NEW_PROGRAM_ACTIONS: ActionItem[] = [
+  { id: 'empty', label: 'Empty program' },
+  { id: 'copy', label: 'Copy from another client' },
 ];
 
 export default function TodayScreen() {
@@ -71,6 +83,11 @@ export default function TodayScreen() {
   const [clientPickerOpen, setClientPickerOpen] = useState(false);
   const [liftPickerOpen, setLiftPickerOpen] = useState(false);
   const [noteTarget, setNoteTarget] = useState<{ liftId: string; setIndex: number } | null>(null);
+  const [newProgramTarget, setNewProgramTarget] = useState<{
+    clientId: string;
+    clientName: string;
+  } | null>(null);
+  const [copySourcePickerOpen, setCopySourcePickerOpen] = useState(false);
 
   const noteInitialValue = useMemo(() => {
     if (!noteTarget || !program) return '';
@@ -175,8 +192,53 @@ export default function TodayScreen() {
   const handleRosterRowPress = (row: typeof rosterRows[number]) => {
     if (row.program) {
       setViewedProgramId(row.program.id);
+      return;
     }
-    // No-program rows are not navigable yet — TODO: new-program-from-scratch flow.
+    setNewProgramTarget({ clientId: row.client.id, clientName: row.client.name });
+  };
+
+  const handleNewProgramAction = (id: string) => {
+    if (!newProgramTarget) return;
+    if (id === 'empty') {
+      const today = new Date();
+      const newId = createEmptyProgram({
+        clientId: newProgramTarget.clientId,
+        dateIso: todayIso(),
+        dateLong: formatDateLong(today),
+        dateShort: formatDateShort(today),
+      });
+      setNewProgramTarget(null);
+      refreshRoster();
+      setViewedProgramId(newId);
+    } else if (id === 'copy') {
+      setCopySourcePickerOpen(true);
+    }
+  };
+
+  const copySourceCandidates = useMemo(
+    () =>
+      rosterRows
+        .filter(r => r.program && r.client.id !== newProgramTarget?.clientId)
+        .map(r => r.client),
+    [rosterRows, newProgramTarget],
+  );
+
+  const handleCopySource = (sourceClientId: string) => {
+    if (!newProgramTarget) return;
+    const sourceRow = rosterRows.find(r => r.client.id === sourceClientId);
+    if (!sourceRow?.program) return;
+    const today = new Date();
+    const newId = copyProgramForClient({
+      sourceProgramId: sourceRow.program.id,
+      targetClientId: newProgramTarget.clientId,
+      targetDateIso: todayIso(),
+      targetDateLong: formatDateLong(today),
+      targetDateShort: formatDateShort(today),
+    });
+    setCopySourcePickerOpen(false);
+    setNewProgramTarget(null);
+    refreshRoster();
+    setViewedProgramId(newId);
   };
 
   return (
@@ -228,6 +290,21 @@ export default function TodayScreen() {
         actions={LIFT_ACTIONS}
         onSelect={handleAction}
         onCancel={() => setActionLiftId(null)}
+      />
+
+      <ActionSheet
+        visible={newProgramTarget !== null && !copySourcePickerOpen}
+        title={newProgramTarget ? `New program for ${newProgramTarget.clientName}` : undefined}
+        actions={NEW_PROGRAM_ACTIONS}
+        onSelect={handleNewProgramAction}
+        onCancel={() => setNewProgramTarget(null)}
+      />
+
+      <ClientPickerSheet
+        visible={copySourcePickerOpen}
+        clients={copySourceCandidates}
+        onSelect={handleCopySource}
+        onCancel={() => setCopySourcePickerOpen(false)}
       />
 
       <DatePickerSheet
