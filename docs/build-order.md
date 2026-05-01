@@ -17,17 +17,12 @@ This is the queue. Build top-to-bottom. Each item names a target user behavior, 
 
 These are the items left from the spec build orders ([`logging-screen.md` §11](specs/logging-screen.md), [`program-builder.md` §13](specs/program-builder.md)) that the demo needs to feel like a real app rather than a partial prototype.
 
-### 1. Add lift to a program (lift picker)
-- **Why:** admin can add and remove sets, but can't add new lifts to a program. Authoring is incomplete without this.
-- **Spec:** [`program-builder.md` §4.2](specs/program-builder.md).
-- **Done when:** an `+ Add lift` button at the bottom of the program in admin mode opens a searchable picker (autocomplete from the canonical lift list); selecting one appends it with sensible defaults (e.g., 3×10 at a placeholder weight).
-
-### 2. New-program-from-scratch flow
+### 1. New-program-from-scratch flow
 - **Why:** clients without a program (Pat, walk-ins) can't be authored today. Admin tapping a `NO PROGRAM` row goes nowhere.
 - **Spec:** [`program-builder.md` §7](specs/program-builder.md).
 - **Done when:** tapping a no-program row presents three starting points (empty / new-client template / copy from another client); selecting one creates a draft program and opens the editor.
 
-### 3. Publish All
+### 2. Publish All
 - **Why:** spec-listed and the button is already on screen. Trivial to wire.
 - **Spec:** [`program-builder.md` §3.1](specs/program-builder.md).
 - **Done when:** the button publishes every draft on today's roster in one action; replaced by `All published` label when none remain.
@@ -36,6 +31,7 @@ These are the items left from the spec build orders ([`logging-screen.md` §11](
 
 ## Done
 
+- **Add lift to a program (lift picker)** ([cf75749](https://github.com/njcannington/studio-fit-notebook/commit/cf75749)). Admin gets a `+ Add lift` button inside the paper card in editor mode. Slide-up picker searches a canonical library; selection appends with template defaults.
 - **"Was X" annotations** ([439adf3](https://github.com/njcannington/studio-fit-notebook/commit/439adf3)). Admin sees prior-session prescribed weight as a faded italic annotation on each lift's header. Hidden when weight is unchanged or no prior exists.
 - **Per-set notes** ([578cb7b](https://github.com/njcannington/studio-fit-notebook/commit/578cb7b)). Trainer's first piece of pilot feedback. `+ note` chip on deviating sets opens a sheet input; saved notes render inline as italic pencil text. Admin and completed sessions are read-only.
 
