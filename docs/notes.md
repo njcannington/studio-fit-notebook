@@ -31,6 +31,7 @@ Things we hit during implementation, made a call on, and want to revisit later. 
 - **Sync indicator** (top-right pencil icon) is decorative. Will become real when sync exists; leave for now.
 - **Default session time on add-client** is the current hour rounded down (e.g. "10:00 am"). No UI to edit. Trainer might want 15-min granularity.
 - **Search ranking on client picker** — currently `name.includes()`. No fuzzy match, no recency weighting. Spec §14.3 raised this.
+- **"Was X" lookup is per-lift, on every program load.** N queries per program render, where each is an indexed join. Fine for the demo; at scale (100s of clients × 100s of past programs), should batch-load priors for the visible program in a single query.
 
 ---
 
