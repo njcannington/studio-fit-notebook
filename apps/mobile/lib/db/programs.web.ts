@@ -126,3 +126,29 @@ export function removeLift(liftId: string) {
   if (!found) return;
   found.program.lifts = found.program.lifts.filter(l => l.id !== liftId);
 }
+
+export function addLiftToProgram(
+  programId: string,
+  template: {
+    name: string;
+    defaultWeight: string;
+    defaultReps: number;
+    defaultSetCount: number;
+    unit?: 'reps' | 'sec';
+  },
+) {
+  const program = findProgram(programId);
+  if (!program) return;
+  const liftId = `${template.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+  const sets: SetEntry[] = Array.from({ length: template.defaultSetCount }, () => ({
+    prescribedReps: template.defaultReps,
+    completed: false,
+    unit: template.unit,
+  }));
+  program.lifts.push({
+    id: liftId,
+    name: template.name,
+    defaultWeight: template.defaultWeight,
+    sets,
+  });
+}

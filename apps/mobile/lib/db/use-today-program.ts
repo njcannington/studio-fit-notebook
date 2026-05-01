@@ -1,6 +1,7 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
+  addLiftToProgram,
   addSetToLift,
   loadProgram,
   removeLastSetFromLift,
@@ -15,6 +16,7 @@ import {
   setSetNote,
   setSetPrescribedReps,
 } from './programs';
+import type { LiftTemplate } from '@/lib/mock-data/lifts';
 import { programIdFor, todayIso, type Program } from '@/lib/mock-data/today-program';
 
 const DEFAULT_CLIENT_ID = 'nic';
@@ -128,6 +130,12 @@ export function useTodayProgram(programIdOverride?: string) {
     reload();
   };
 
+  const addLift = (template: LiftTemplate) => {
+    if (!program) return;
+    addLiftToProgram(program.id, template);
+    reload();
+  };
+
   const updateSetNote = (liftId: string, setIndex: number, note: string | null) => {
     setSetNote(liftId, setIndex, note);
     setProgram(current =>
@@ -162,5 +170,6 @@ export function useTodayProgram(programIdOverride?: string) {
     updateSetPrescribedReps,
     updateLiftSetCount,
     updateSetNote,
+    addLift,
   };
 }

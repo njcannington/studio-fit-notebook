@@ -8,6 +8,7 @@ import { ClientPickerSheet } from '@/components/client-picker';
 import { DatePickerSheet } from '@/components/date-picker';
 import { WavyDivider } from '@/components/divider';
 import { ChevronLeftIcon, PencilIcon } from '@/components/icons';
+import { LiftPickerSheet } from '@/components/lift-picker';
 import { NumberPad } from '@/components/number-pad';
 import { PaperCard } from '@/components/paper-card';
 import { NoteSheet } from '@/components/note-sheet';
@@ -19,6 +20,7 @@ import { usePriorWeights } from '@/lib/db/use-prior-weights';
 import { useRole } from '@/lib/db/use-role';
 import { useTodayRoster } from '@/lib/db/use-roster';
 import { useTodayProgram } from '@/lib/db/use-today-program';
+import { LIFT_LIBRARY } from '@/lib/mock-data/lifts';
 import { programIdFor, todayIso, type Program } from '@/lib/mock-data/today-program';
 
 const DEFAULT_CLIENT_ID = 'nic';
@@ -57,6 +59,7 @@ export default function TodayScreen() {
     updateSetPrescribedReps,
     updateLiftSetCount,
     updateSetNote,
+    addLift,
   } = useTodayProgram(viewedProgramId ?? undefined);
   const allPrograms = useClientPrograms(DEFAULT_CLIENT_ID);
   const { rows: rosterRows, refresh: refreshRoster } = useTodayRoster();
@@ -66,6 +69,7 @@ export default function TodayScreen() {
   const [actionLiftId, setActionLiftId] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [clientPickerOpen, setClientPickerOpen] = useState(false);
+  const [liftPickerOpen, setLiftPickerOpen] = useState(false);
   const [noteTarget, setNoteTarget] = useState<{ liftId: string; setIndex: number } | null>(null);
 
   const noteInitialValue = useMemo(() => {
@@ -212,6 +216,7 @@ export default function TodayScreen() {
           onPressNote={(liftId, setIndex) => setNoteTarget({ liftId, setIndex })}
           onComplete={() => updateStatus('completed')}
           onLongPressLift={isAdmin ? liftId => setActionLiftId(liftId) : undefined}
+          onPressAddLift={isAdmin ? () => setLiftPickerOpen(true) : undefined}
           onPublish={() => updateStatus('published')}
           onUnpublish={() => updateStatus('draft')}
         />
@@ -265,6 +270,16 @@ export default function TodayScreen() {
         onCommit={commitNote}
         onCancel={() => setNoteTarget(null)}
       />
+
+      <LiftPickerSheet
+        visible={liftPickerOpen}
+        lifts={LIFT_LIBRARY}
+        onSelect={template => {
+          addLift(template);
+          setLiftPickerOpen(false);
+        }}
+        onCancel={() => setLiftPickerOpen(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -282,6 +297,7 @@ type ProgramViewProps = {
   onPressNote: (liftId: string, setIndex: number) => void;
   onComplete: () => void;
   onLongPressLift?: (liftId: string) => void;
+  onPressAddLift?: () => void;
   onPublish: () => void;
   onUnpublish: () => void;
 };
@@ -299,6 +315,7 @@ function ProgramView({
   onPressNote,
   onComplete,
   onLongPressLift,
+  onPressAddLift,
   onPublish,
   onUnpublish,
 }: ProgramViewProps) {
@@ -327,6 +344,14 @@ function ProgramView({
             priorWeight={priorWeights.get(lift.id)}
           />
         ))}
+        {isAdmin && !isCompleted && onPressAddLift ? (
+          <Pressable
+            onPress={onPressAddLift}
+            style={({ pressed }) => [styles.addLift, pressed && styles.addLiftPressed]}
+          >
+            <Text style={styles.addLiftText}>+ Add lift</Text>
+          </Pressable>
+        ) : null}
         {allComplete && !isCompleted ? (
           <CompletionFooter dateLabel={program.dateShort} onComplete={onComplete} />
         ) : null}
@@ -584,6 +609,23 @@ const styles = StyleSheet.create({
     color: colors.paper.cream,
     textTransform: 'uppercase',
     letterSpacing: 1.2,
+  },
+  addLift: {
+    marginTop: spacing[3],
+    paddingVertical: spacing[3],
+    alignItems: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderStyle: 'dashed',
+    borderColor: colors.ink.pencilFaded,
+    borderRadius: 6,
+  },
+  addLiftPressed: {
+    backgroundColor: colors.paper.creamDeep,
+  },
+  addLiftText: {
+    fontFamily: fontFamilies.pencil,
+    fontSize: 16,
+    color: colors.ink.pencilLight,
   },
   publishButton: {
     backgroundColor: colors.rust.base,

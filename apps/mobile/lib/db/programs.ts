@@ -337,3 +337,55 @@ export function removeLift(liftId: string) {
   const db = getDb();
   db.runSync('DELETE FROM lifts WHERE id = ?', [liftId]);
 }
+
+export function addLiftToProgram(
+  programId: string,
+  template: {
+    name: string;
+    defaultWeight: string;
+    defaultReps: number;
+    defaultSetCount: number;
+    unit?: 'reps' | 'sec';
+  },
+) {
+  const db = getDb();
+  const existing = db.getFirstSync<{ count: number; max_order: number | null }>(
+    'SELECT COUNT(*) as count, MAX(sort_order) as max_order FROM lifts WHERE program_id = ?',
+    [programId],
+  );
+  const sortOrder = (existing?.max_order ?? -1) + 1;
+  const liftId = `${slugify(template.name)}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+
+  db.withTransactionSync(() => {
+    db.runSync(
+      'INSERT INTO lifts (id, program_id, name, default_weight, sort_order) VALUES (?, ?, ?, ?, ?)',
+      [liftId, programId, template.name, template.defaultWeight, sortOrder],
+    );
+    for (let i = 0; i < template.defaultSetCount; i++) {
+      db.runSync(
+        `INSERT INTO sets (id, lift_id, sort_order, prescribed_reps, actual_reps,
+          prescribed_weight, actual_weight, unit, completed, note)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          `${liftId}-${i}`,
+          liftId,
+          i,
+          template.defaultReps,
+          null,
+          null,
+          null,
+          template.unit ?? null,
+          0,
+          null,
+        ],
+      );
+    }
+  });
+}
+
+function slugify(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
